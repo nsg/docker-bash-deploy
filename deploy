@@ -148,7 +148,7 @@ get_metadata() {
 	local app=$2
 	local key=$3
 
-	remote_command $host cat /tmp/docker/$app/image
+	remote_command $host cat /tmp/docker/$app/$key
 }
 
 get_app_from_id() {
