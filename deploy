@@ -1,18 +1,20 @@
 #!/bin/bash
 
-if [ -f ~/.docker-bash-deploy ]; then
+if [[ $1 =~ servers= ]]; then
+	hosts="$(cat $(echo $1 | awk -F'=' '{print $NF}'))"
+	command=$2
+elif [ -f ~/.docker-bash-deploy ]; then
 	hosts="$(awk -F'=' '/servers/{print $NF}' ~/.docker-bash-deploy)"
 	command=$1
 else
-	hosts="$(cat $1)"
-	command=$2
+	echo "You need to provide the serverlist with servers=myfile or"
+	echo "define the servers in the configuration."
 fi
 
 set -e
 
 if [ -z $command ]; then
-	echo    "usage: hosts-file command"
-	echo -e "commands\tsetup"
+	echo    "usage: [servers=hosts-file] command"
 	exit 1
 fi
 
@@ -48,6 +50,7 @@ list_servers() {
 			"containers: $(remote_command $server docker ps -q 2> /dev/null | wc -l)"
 		echo
 		list_apps $server
+		echo
 	done
 }
 

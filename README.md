@@ -14,11 +14,11 @@ We assume that you can login as root w/o any password.
 
 After that, install the needed applications on the target servers with:
 
-`./deploy myservers setup`
+`./deploy servers=myservers setup`
 
 All done, deploy for example nginx:
 
-`./deploy myservers deploy webserver nginx`
+`./deploy servers=myservers deploy webserver nginx`
 
 This will download the image `nginx` to `10.0.0.2` and `10.0.0.3` and make it available on `webserver.stefanberggren.se`.
 
@@ -51,6 +51,6 @@ The configuration file is `~/.docker-bash-deploy`
 ### server
 
 Define your servers here, no need to define the server list on the
-command line. For example `./deploy myservers list` will just be `./deploy list`.
+command line. For example `./deploy servers=myservers list` will just be `./deploy list`.
 
 `servers=10.0.0.2 10.0.0.3`
