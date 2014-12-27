@@ -44,6 +44,20 @@ List all running containers on all servers.
 
 List servers and various information.
 
+### set [host] app key value
+
+Set custom params to host(s). Set the parameter `foo` with the value `bar` to the app `myapp`to all hosts.
+
+```
+./deploy set myapp foo bar
+```
+
+The same thing, but limit it to just one host.
+
+```
+./deploy set 10.0.0.2 myapp foo bar
+```
+
 ## Configuration
 
 The configuration file is `~/.docker-bash-deploy`

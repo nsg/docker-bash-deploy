@@ -139,6 +139,7 @@ save_metadata() {
 	local key=$3
 	local value=$4
 
+	remote_command $host "mkdir -p /tmp/docker/$app"
 	remote_command $host "echo $value > /tmp/docker/$app/$key"
 }
 
@@ -223,6 +224,18 @@ case $command in
 		;;
 	servers)
 		list_servers
+		;;
+	set)
+		shift
+		if [ -z $4 ]; then
+			for host in $hosts; do
+				echo "set $1.$2=$3 at $host"
+				save_metadata $host $1 $2 $3
+			done
+		else
+			echo "set $2.$3=$4 at $1"
+			save_metadata $host $1 $2 $3 $4
+		fi
 		;;
 	*)
 		echo "Unknown command: $command"
