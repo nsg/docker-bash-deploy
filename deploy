@@ -1,0 +1,222 @@
+#!/bin/bash
+
+hosts=$1
+command=$2
+
+set -e
+
+if [ -z $hosts ] || [ -z $command ]; then
+	echo    "usage: hosts-file command"
+	echo -e "commands\tsetup"
+	exit 1
+fi
+
+remote_command() {
+	local host=$1
+	shift
+	ssh -l root $host $@
+}
+
+check_release() {
+	local host=$1
+	local version=$(remote_command $host lsb_release -rs)
+
+	# Make sure this is a supported version
+	case $version in
+		14.04)
+			echo "Detected Ubuntu $version LTS, supported!"
+			;;
+		*)
+			echo "Detected $version, not supported."
+			echo "Aborted!"
+			exit 1
+			;;
+	esac
+}
+
+list_servers() {
+	echo "Servers found in $hosts:"
+	for server in $(cat $hosts); do
+		echo -n "$server ⇨ "
+		remote_command $server lsb_release -ris | tr '\n' ' '
+		echo -n "⇨ $(remote_command $server docker -v) " \
+			"containers: $(remote_command $server docker ps -q 2> /dev/null | wc -l)"
+		echo
+		list_apps $server
+	done
+}
+
+setup_packages() {
+	for server in $(cat $hosts); do
+		check_release $server
+
+		# Install Docker from the latest Docker repos
+		remote_command $server apt-key adv \
+			--keyserver hkp://keyserver.ubuntu.com:80 \
+			--recv-keys 36A1D7869245C8950F966E92D8576A8BA88D21E9
+		remote_command $server 'echo deb https://get.docker.com/ubuntu docker main > /etc/apt/sources.list.d/docker.list'
+		remote_command $server apt-get update
+		remote_command $server apt-get install -y lxc-docker
+
+		# Install nginx and configure nginx
+		remote_command $server apt-get install -y nginx
+		remote_command $server rm -f /etc/nginx/sites-available/* /etc/nginx/sites-enabled/*
+	done
+}
+
+deploy_container() {
+	local host=$1
+	local app=$2
+	local image=$3
+	local port=$(find_free_port $host)
+
+	remote_command $host mkdir -p /tmp/docker/$app
+
+	echo "$host: Deploying $app ($image) on port $port"
+	remote_command $host "echo $port > /tmp/docker/$app/port"
+	local app_id=$(remote_command $host docker run -d -p $port:80 --name app-$app-$port-$RANDOM $image)
+
+	configure_nginx $host $app $port
+	save_metadata $host $app id $app_id
+	save_metadata $host $app image $image
+
+	echo "Finding old instances of $app to undeploy on $host"
+	for id in $(remote_command $host docker ps --no-trunc | grep -v :$port | grep app-${app}- | awk '{print $1}'); do
+		remote_command $host docker stop $id
+	done
+}
+
+undeploy_container() {
+	local host=$1
+	local app=$2
+
+	if [ x$(has_app $host $app) == xyes ]; then
+		echo "Undeploy $app from $host"
+		remote_command $host docker stop \$\(cat /tmp/docker/$app/id\)
+		remote_command $host rm -f /etc/nginx/conf.d/${app}.conf
+		remote_command $host nginx -s reload
+		remote_command $host rm -rf /tmp/docker/$app
+		clean_up $host
+	fi
+}
+
+list_apps() {
+	local host=$1
+
+	for uid in $(remote_command $host docker ps --no-trunc -q); do
+		local app=$(get_app_from_id $host $uid)
+		local port=$(get_metadata $host $app port)
+		local image=$(get_metadata $host $app image)
+
+		echo "$app($image):80 ⇄ $port"
+	done
+}
+
+has_app() {
+	local host=$1
+	local chapp=$2
+
+	for uid in $(remote_command $host docker ps --no-trunc -q); do
+		local app=$(get_app_from_id $host $uid)
+		if [ x$app == x$chapp ]; then
+			echo yes
+			return;
+		fi
+	done
+}
+
+save_metadata() {
+	local host=$1
+	local app=$2
+	local key=$3
+	local value=$4
+
+	remote_command $host "echo $value > /tmp/docker/$app/$key"
+}
+
+get_metadata() {
+	local host=$1
+	local app=$2
+	local key=$3
+
+	remote_command $host cat /tmp/docker/$app/image
+}
+
+get_app_from_id() {
+	local host=$1
+	local uid=$2
+
+	remote_command $host grep -l $uid '/tmp/docker/*/id' | awk -F'/' '{print $4}'
+}
+
+find_free_port() {
+	local host=$1
+
+	remote_command $host '
+		for port in $(seq 30000 39999); do
+			if ! netstat -nta | grep -q $port; then
+				echo $port;
+				break;
+			fi;
+		done
+		'
+}
+
+configure_nginx() {
+	local host=$1
+	local app=$2
+	local port=$3
+
+	remote_command $host "echo \"
+	server {
+		listen 80;
+		server_name ${app}.stefanberggren.se;
+		location / {
+			proxy_pass http://127.0.0.1:$port;
+		}
+	}
+	\" > /etc/nginx/conf.d/${app}.conf"
+	remote_command $host nginx -s reload
+}
+
+clean_up() {
+	local host=$1
+
+	echo "Clean up unused containers and images."
+	for rm in $(remote_command $host 'docker ps -a -q'); do
+		remote_command $host docker rm $rm
+	done
+	for rmi in $(remote_command $host docker images | awk '/^<none>/ { print $3 }'); do
+		remote_command $host docker rmi $rmi
+	done
+}
+
+case $command in
+	setup)
+		setup_packages
+		;;
+	deploy)
+		shift 2
+		for host in $(cat $hosts); do
+			deploy_container $host $@
+		done
+		;;
+	undeploy)
+		shift 2
+		for host in $(cat $hosts); do
+			undeploy_container $host $@
+		done
+		;;
+	list)
+		for host in $(cat $hosts); do
+			echo "$host:"
+			list_apps $host
+		done
+		;;
+	servers)
+		list_servers
+		;;
+	*)
+		echo "Unknown command: $command"
+		;;
+esac
