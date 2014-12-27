@@ -42,9 +42,8 @@ check_release() {
 }
 
 list_servers() {
-	echo "Servers found in $hosts:"
 	for server in $hosts; do
-		echo -n "$server ⇨ "
+		echo -en "\e[1m$server\e[0m: "
 		remote_command $server lsb_release -ris | tr '\n' ' '
 		echo -n "⇨ $(remote_command $server docker -v) " \
 			"containers: $(remote_command $server docker ps -q 2> /dev/null | wc -l)"
@@ -80,7 +79,7 @@ deploy_container() {
 
 	remote_command $host mkdir -p /tmp/docker/$app
 
-	echo "$host: Deploying $app ($image) on port $port"
+	echo -e "Deploying \e[1m$app\e[0m ($image) on port $port on \e[1m$host\e[0m"
 	remote_command $host "echo $port > /tmp/docker/$app/port"
 	local app_id=$(remote_command $host docker run -d -p $port:80 --name app-$app-$port-$RANDOM $image)
 
@@ -99,7 +98,7 @@ undeploy_container() {
 	local app=$2
 
 	if [ x$(has_app $host $app) == xyes ]; then
-		echo "Undeploy $app from $host"
+		echo "\e[1mUndeploy $app from $host\e[0m"
 		remote_command $host docker stop \$\(cat /tmp/docker/$app/id\)
 		remote_command $host rm -f /etc/nginx/conf.d/${app}.conf
 		remote_command $host nginx -s reload
@@ -204,21 +203,22 @@ case $command in
 		setup_packages
 		;;
 	deploy)
-		shift 2
+		shift
 		for host in $hosts; do
 			deploy_container $host $@
 		done
 		;;
 	undeploy)
-		shift 2
+		shift
 		for host in $hosts; do
 			undeploy_container $host $@
 		done
 		;;
 	list)
 		for host in $hosts; do
-			echo "$host:"
+			echo -e "\e[1m$host\e[0m:"
 			list_apps $host
+			echo
 		done
 		;;
 	servers)
