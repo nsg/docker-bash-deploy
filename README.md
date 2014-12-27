@@ -58,6 +58,14 @@ The same thing, but limit it to just one host.
 ./deploy set 10.0.0.2 myapp foo bar
 ```
 
+### get app
+
+Get all custom params from a app.
+
+```
+./deploy get myapp
+```
+
 ## Configuration
 
 The configuration file is `~/.docker-bash-deploy`
