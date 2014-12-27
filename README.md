@@ -30,11 +30,11 @@ Prepare the system and install all the needed applications.
 
 ### deploy name image
 
-Deploy image to all systems with the name name.
+Deploy `image` to all systems with the name `name`.
 
 ### undeploy name
 
-Undeploy/remove name from all systems.
+Undeploy/remove `name` from all systems.
 
 ### list
 
