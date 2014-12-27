@@ -104,7 +104,6 @@ undeploy_container() {
 		remote_command $host rm -f /etc/nginx/conf.d/${app}.conf
 		remote_command $host nginx -s reload
 		remote_command $host rm -rf /tmp/docker/$app
-		clean_up $host
 	fi
 }
 
@@ -198,18 +197,6 @@ configure_nginx() {
 	}
 	\" > /etc/nginx/conf.d/${app}.conf"
 	remote_command $host nginx -s reload
-}
-
-clean_up() {
-	local host=$1
-
-	echo "Clean up unused containers and images."
-	for rm in $(remote_command $host 'docker ps -a -q'); do
-		remote_command $host docker rm $rm
-	done
-	for rmi in $(remote_command $host docker images | awk '/^<none>/ { print $3 }'); do
-		remote_command $host docker rmi $rmi
-	done
 }
 
 case $command in
