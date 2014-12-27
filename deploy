@@ -158,6 +158,18 @@ get_app_from_id() {
 	remote_command $host grep -l $uid '/tmp/docker/*/id' | awk -F'/' '{print $4}'
 }
 
+get_app() {
+	local host=$1
+	local app=$2
+
+	echo -e "\e[1m$host\e[0m:"
+	remote_command $host "
+		for f in /tmp/docker/$app/*; do
+			echo -n \"\${f##*/} ↠ \"; cat \$f;
+		done"
+	echo
+}
+
 find_free_port() {
 	local host=$1
 
@@ -236,6 +248,12 @@ case $command in
 			echo "set $2.$3=$4 at $1"
 			save_metadata $host $1 $2 $3 $4
 		fi
+		;;
+	get)
+		shift
+		for host in $hosts; do
+			get_app $host $1
+		done
 		;;
 	*)
 		echo "Unknown command: $command"
