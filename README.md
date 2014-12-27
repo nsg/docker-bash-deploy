@@ -2,7 +2,7 @@
 
 This is a quick just-for-fun bash script that deploys Docker containers to servers running Ubuntu 14.04 LTS. It is fully usable but quite untested.
 
-## How to use
+## Quick test
 
 We need a file containing the servers, for example:
 ```
@@ -43,3 +43,14 @@ List all running containers on all servers.
 ### servers
 
 List servers and various information.
+
+## Configuration
+
+The configuration file is `~/.docker-bash-deploy`
+
+### server
+
+Define your servers here, no need to define the server list on the
+command line. For example `./deploy myservers list` will just be `./deploy list`.
+
+`servers=10.0.0.2 10.0.0.3`

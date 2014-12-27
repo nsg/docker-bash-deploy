@@ -1,11 +1,16 @@
 #!/bin/bash
 
-hosts=$1
-command=$2
+if [ -f ~/.docker-bash-deploy ]; then
+	hosts="$(awk -F'=' '/servers/{print $NF}' ~/.docker-bash-deploy)"
+	command=$1
+else
+	hosts="$(cat $1)"
+	command=$2
+fi
 
 set -e
 
-if [ -z $hosts ] || [ -z $command ]; then
+if [ -z $command ]; then
 	echo    "usage: hosts-file command"
 	echo -e "commands\tsetup"
 	exit 1
@@ -36,7 +41,7 @@ check_release() {
 
 list_servers() {
 	echo "Servers found in $hosts:"
-	for server in $(cat $hosts); do
+	for server in $hosts; do
 		echo -n "$server ⇨ "
 		remote_command $server lsb_release -ris | tr '\n' ' '
 		echo -n "⇨ $(remote_command $server docker -v) " \
@@ -47,7 +52,7 @@ list_servers() {
 }
 
 setup_packages() {
-	for server in $(cat $hosts); do
+	for server in $hosts; do
 		check_release $server
 
 		# Install Docker from the latest Docker repos
@@ -197,18 +202,18 @@ case $command in
 		;;
 	deploy)
 		shift 2
-		for host in $(cat $hosts); do
+		for host in $hosts; do
 			deploy_container $host $@
 		done
 		;;
 	undeploy)
 		shift 2
-		for host in $(cat $hosts); do
+		for host in $hosts; do
 			undeploy_container $host $@
 		done
 		;;
 	list)
-		for host in $(cat $hosts); do
+		for host in $hosts; do
 			echo "$host:"
 			list_apps $host
 		done
