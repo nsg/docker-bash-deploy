@@ -53,4 +53,6 @@ The configuration file is `~/.docker-bash-deploy`
 Define your servers here, no need to define the server list on the
 command line. For example `./deploy servers=myservers list` will just be `./deploy list`.
 
-`servers=10.0.0.2 10.0.0.3`
+```
+servers=10.0.0.2 10.0.0.3
+```
