@@ -5,21 +5,22 @@ This is a quick just-for-fun bash script that deploys Docker containers to serve
 ## How to use
 
 We need a file containing the servers, for example:
+```
 $ cat myservers
 10.0.0.2
 10.0.0.3
-
+```
 We assume that you can login as root w/o any password.
 
 After that, install the needed applications on the target servers with:
 
-./deploy myservers setup
+`./deploy myservers setup`
 
 All done, deploy for example nginx:
 
-./deploy myservers deploy webserver nginx
+`./deploy myservers deploy webserver nginx`
 
-This will download the image nginx to 10.0.0.2 and 10.0.0.3 and make it available on webserver.stefanberggren.se.
+This will download the image `nginx` to `10.0.0.2` and `10.0.0.3` and make it available on `webserver.stefanberggren.se`.
 
 ## All commands
 
