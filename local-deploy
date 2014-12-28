@@ -1,0 +1,188 @@
+#!/bin/bash
+
+show_help() {
+	echo -e "\e[1mdocker-bash-deploy\e[0m"
+	echo -e "\tThis is a simple deployment tool written in bash."
+	echo
+	echo -e "usage:    $0 params"
+	echo
+	echo -e "-h        This help page"
+	echo -e "-D        Show debug messages"
+	echo -e "-c path   Path to config file"
+    echo -e "          Default is ~/.docker-bash-deploy"
+	echo -e "-H host   Provide a list of hosts on the commandline"
+	echo -e "          This overloads settings from -c"
+	echo -e "-I        Install the tool and packages on the remote server(s)"
+	echo -e "-l        List running containers"
+	echo -e "-d name   Deploy a container called 'name', use with -i"
+	echo -e "          example: -d test -i nginx"
+	echo -e "-i image  Specify a image name, use with -d"
+	echo -e "-u name   Undeploy the container 'name'"
+	echo -e "-k key    Set or get a key on a server(s), use with -a"
+	echo -e "-v value  Set the value, in combination with -k and -H"
+	echo -e "          example: -a myapp -k foo -v bar"
+	echo -e "-s        Show server status and running containers."
+	echo -e "-a app    Select a container, use with -k"
+}
+
+load_config() {
+	local file=$1
+
+	if [ ! -f $file ]; then
+		echo "Config file '$file' not found" 2>&1
+		exit 1
+	fi
+
+	hosts="$(awk -F'=' '/servers/{print $NF}' $file)"
+}
+
+get_app() {
+	local host=$1
+	local app=$2
+
+	echo -e "\e[1m$host\e[0m:"
+	remote_command_raw $host "
+		for f in /tmp/docker/$app/*; do
+			echo -n \"\${f##*/} ↠ \"; cat \$f;
+		done"
+	echo
+}
+
+remote_command() {
+	local host=$1
+	shift
+	ssh -l root $host deploy $@
+}
+
+remote_command_raw() {
+	local host=$1
+	shift
+	ssh -l root $host $@
+}
+
+save_metadata() {
+	local host=$1
+	local app=$2
+	local key=$3
+	local value=$4
+
+	remote_command_raw $host "mkdir -p /tmp/docker/$app"
+	remote_command_raw $host "echo $value > /tmp/docker/$app/$key"
+}
+
+while getopts "hDc:Ild:u:i:H:sk:v:a:" opt; do
+	case $opt in
+		h)
+			show_help
+			;;
+		D)
+			__debug=true
+			;;
+		c)
+			__config="$OPTARG"
+			;;
+		I)
+			__install=true
+			;;
+		l)
+			__list=true
+			;;
+		d)
+			__deploy="$OPTARG"
+			;;
+		u)
+			__undeploy="$OPTARG"
+			;;
+		i)
+			__image="$OPTARG"
+			;;
+		H)
+			__host="$OPTARG"
+			;;
+		s)
+			__servers=true
+			;;
+		k)
+			__key="$OPTARG"
+			;;
+		v)
+			__value="$OPTARG"
+			;;
+		a)
+			__app="$OPTARG"
+			;;
+	esac
+done
+
+[ $__debug ] && echo "debug mode: true"
+
+# Load config
+if [ $__config ]; then
+	load_config $__config
+elif [ -f ~/.docker-bash-deploy ]; then
+	load_config ~/.docker-bash-deploy
+else
+	echo "No hosts loaded, abort!" 2>&1
+	exit 1
+fi
+if [ $__host ]; then
+	hosts=$__host
+fi
+[ $__debug ] && echo "hosts: $hosts"
+
+# Install the remote half of the script
+if [ $__install ]; then
+	for host in $hosts; do
+		scp remote-deploy root@$host:/usr/local/bin/deploy
+		ssh root@$host chmod +x /usr/local/bin/deploy
+		remote_command $host setup
+	done
+fi
+
+# List running containers
+if [ $__list ]; then
+	for host in $hosts; do
+		echo -e "\e[1m$host\e[0m:"
+		remote_command $host list
+		echo
+	done
+fi
+
+# Deploy a container
+if [ $__deploy ] && [ $__image ]; then
+	for host in $hosts; do
+		remote_command $host deploy $__deploy $__image
+	done
+fi
+
+# Undeploy a container
+if [ $__undeploy ]; then
+	for host in $hosts; do
+		remote_command $host undeploy $__undeploy
+	done
+fi
+
+# List server status
+if [ $__servers ]; then
+	for host in $hosts; do
+		echo -en "\e[1m$host\e[0m: "
+		remote_command_raw $host lsb_release -ris | tr '\n' ' '
+		echo -n "⇨ $(remote_command_raw $host docker -v) " \
+			"containers: $(remote_command_raw $host docker ps -q 2> /dev/null | wc -l)"
+		echo
+		remote_command $host list
+		echo
+	done
+fi
+
+# Set metadata
+if [ $__app ] && [ $__key ] && [ $__value ]; then
+	for host in $hosts; do
+		echo "set $__app: $__key=$__value at $host"
+		save_metadata $host $__app $__key $__value
+	done
+elif [ $__app ]; then
+	for host in $hosts; do
+		get_app $host $__app
+	done
+fi

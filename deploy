@@ -6,6 +6,8 @@ if [[ $1 =~ servers= ]]; then
 elif [ -f ~/.docker-bash-deploy ]; then
 	hosts="$(awk -F'=' '/servers/{print $NF}' ~/.docker-bash-deploy)"
 	command=$1
+elif [ -f /usr/local/bin/deploy ]; then
+	command=$1
 else
 	echo "You need to provide the serverlist with servers=myfile or"
 	echo "define the servers in the configuration."
@@ -18,27 +20,20 @@ if [ -z $command ]; then
 	exit 1
 fi
 
+##
+# Executed on the local system.
+##
+
 remote_command_raw() {
 	local host=$1
 	shift
 	ssh -l root $host $@
 }
 
-check_release() {
+remote_command() {
 	local host=$1
-	local version=$(remote_command_raw $host lsb_release -rs)
-
-	# Make sure this is a supported version
-	case $version in
-		14.04)
-			echo "Detected Ubuntu $version LTS, supported!"
-			;;
-		*)
-			echo "Detected $version, not supported."
-			echo "Aborted!"
-			exit 1
-			;;
-	esac
+	shift
+	ssh -l root $host deploy $@
 }
 
 list_servers() {
@@ -53,57 +48,11 @@ list_servers() {
 	done
 }
 
-setup_packages() {
-	for server in $hosts; do
-		check_release $server
-
-		# Install Docker from the latest Docker repos
-		remote_command_raw $server apt-key adv \
-			--keyserver hkp://keyserver.ubuntu.com:80 \
-			--recv-keys 36A1D7869245C8950F966E92D8576A8BA88D21E9
-		remote_command_raw $server 'echo deb https://get.docker.com/ubuntu docker main > /etc/apt/sources.list.d/docker.list'
-		remote_command_raw $server apt-get update
-		remote_command_raw $server apt-get install -y lxc-docker
-
-		# Install nginx and configure nginx
-		remote_command_raw $server apt-get install -y nginx
-		remote_command_raw $server rm -f /etc/nginx/sites-available/* /etc/nginx/sites-enabled/*
-	done
-}
-
-deploy_container() {
+setup_script_on_remote_host() {
 	local host=$1
-	local app=$2
-	local image=$3
-	local port=$(find_free_port $host)
-
-	remote_command_raw $host mkdir -p /tmp/docker/$app
-
-	echo -e "Deploying \e[1m$app\e[0m ($image) on port $port on \e[1m$host\e[0m"
-	remote_command_raw $host "echo $port > /tmp/docker/$app/port"
-	local app_id=$(remote_command_raw $host docker run -d -p $port:80 --name app-$app-$port-$RANDOM $image)
-
-	configure_nginx $host $app $port
-	save_metadata $host $app id $app_id
-	save_metadata $host $app image $image
-
-	echo "Finding old instances of $app to undeploy on $host"
-	for id in $(remote_command_raw $host docker ps --no-trunc | grep -v :$port | grep app-${app}- | awk '{print $1}'); do
-		remote_command_raw $host docker stop $id
-	done
-}
-
-undeploy_container() {
-	local host=$1
-	local app=$2
-
-	if [ x$(has_app $host $app) == xyes ]; then
-		echo "\e[1mUndeploy $app from $host\e[0m"
-		remote_command_raw $host docker stop \$\(cat /tmp/docker/$app/id\)
-		remote_command_raw $host rm -f /etc/nginx/conf.d/${app}.conf
-		remote_command_raw $host nginx -s reload
-		remote_command_raw $host rm -rf /tmp/docker/$app
-	fi
+	shift
+	scp $0 root@$host:/usr/local/bin/deploy
+	ssh root@$host chmod +x /usr/local/bin/deploy
 }
 
 list_apps() {
@@ -115,19 +64,6 @@ list_apps() {
 		local image=$(get_metadata $host $app image)
 
 		echo "$app($image):80 ⇄ $port"
-	done
-}
-
-has_app() {
-	local host=$1
-	local chapp=$2
-
-	for uid in $(remote_command_raw $host docker ps --no-trunc -q); do
-		local app=$(get_app_from_id $host $uid)
-		if [ x$app == x$chapp ]; then
-			echo yes
-			return;
-		fi
 	done
 }
 
@@ -153,7 +89,7 @@ get_app_from_id() {
 	local host=$1
 	local uid=$2
 
-	remote_command_raw $host grep -l $uid '/tmp/docker/*/id' | awk -F'/' '{print $4}'
+	remote_command $host grep -l $uid '/tmp/docker/*/id' | awk -F'/' '{print $4}'
 }
 
 get_app() {
@@ -168,25 +104,119 @@ get_app() {
 	echo
 }
 
+##
+# Executed on the remote system.
+##
+
 find_free_port() {
+	for port in $(seq 30000 39999); do
+		if ! netstat -nta | grep -q $port; then
+			echo $port;
+			break;
+		fi;
+	done
+}
+
+has_app() {
+	local chapp=$1
+
+	for uid in $(docker ps --no-trunc -q); do
+		local app=$(get_app_from_id_remote $uid)
+		if [ x$app == x$chapp ]; then
+			echo yes
+			return;
+		fi
+	done
+}
+
+get_app_from_id_remote() {
+	local uid=$1
+
+	grep -l $uid /tmp/docker/*/id | awk -F'/' '{print $4}'
+}
+
+save_metadata_remote() {
+	local app=$1
+	local key=$2
+	local value=$3
+
+	mkdir -p /tmp/docker/$app
+	echo $value > /tmp/docker/$app/$key
+}
+
+check_release() {
+	local host=$1
+	local version=$(lsb_release -rs)
+
+	# Make sure this is a supported version
+	case $version in
+		14.04)
+			echo "Detected Ubuntu $version LTS, supported!"
+			;;
+		*)
+			echo "Detected $version, not supported."
+			echo "Aborted!"
+			exit 1
+			;;
+	esac
+}
+
+setup_packages() {
 	local host=$1
 
-	remote_command_raw $host '
-		for port in $(seq 30000 39999); do
-			if ! netstat -nta | grep -q $port; then
-				echo $port;
-				break;
-			fi;
-		done
-		'
+	check_release $host
+
+	# Install Docker from the latest Docker repos
+	apt-key adv \
+		--keyserver hkp://keyserver.ubuntu.com:80 \
+		--recv-keys 36A1D7869245C8950F966E92D8576A8BA88D21E9
+	echo deb https://get.docker.com/ubuntu docker main > /etc/apt/sources.list.d/docker.list
+	apt-get update
+	apt-get install -y lxc-docker
+
+	# Install nginx and configure nginx
+	apt-get install -y nginx
+	rm -f /etc/nginx/sites-available/* /etc/nginx/sites-enabled/*
+}
+
+deploy_container() {
+	local app=$1
+	local image=$2
+	local port=$(find_free_port)
+
+	mkdir -p /tmp/docker/$app
+
+	echo -e "Deploying \e[1m$app\e[0m ($image) on port $port"
+	echo $port > /tmp/docker/$app/port
+	local app_id=$(docker run -d -p $port:80 --name app-$app-$port-$RANDOM $image)
+
+	configure_nginx $app $port
+	save_metadata_remote $app id $app_id
+	save_metadata_remote $app image $image
+
+	echo "Finding old instances of $app to undeploy on $host"
+	for id in $(docker ps --no-trunc | grep -v :$port | grep app-${app}- | awk '{print $1}'); do
+		docker stop $id
+	done
+}
+
+undeploy_container() {
+	local app=$1
+
+	if [ x$(has_app $app) == xyes ]; then
+		echo -e "\e[1mUndeploy $app\e[0m"
+		docker stop $(cat /tmp/docker/$app/id)
+		rm -f /etc/nginx/conf.d/${app}.conf
+		nginx -s reload
+		rm -rf /tmp/docker/$app
+	fi
 }
 
 configure_nginx() {
-	local host=$1
-	local app=$2
-	local port=$3
+	local app=$1
+	local port=$2
 
-	remote_command_raw $host "echo \"
+	echo "
 	server {
 		listen 80;
 		server_name ${app}.stefanberggren.se;
@@ -194,24 +224,36 @@ configure_nginx() {
 			proxy_pass http://127.0.0.1:$port;
 		}
 	}
-	\" > /etc/nginx/conf.d/${app}.conf"
-	remote_command_raw $host nginx -s reload
+	" > /etc/nginx/conf.d/${app}.conf
+	nginx -s reload
 }
 
+
+
+##
+# Control
+##
+
 case $command in
+
+	# Execute these on the local system
+
 	setup)
-		setup_packages
+		for host in $hosts; do
+			setup_script_on_remote_host $host
+			#remote_command $host setup-packages
+		done
 		;;
 	deploy)
 		shift
 		for host in $hosts; do
-			deploy_container $host $@
+			remote_command $host deploy-remote $@
 		done
 		;;
 	undeploy)
 		shift
 		for host in $hosts; do
-			undeploy_container $host $@
+			remote_command $host undeploy-remote $@
 		done
 		;;
 	list)
@@ -242,6 +284,21 @@ case $command in
 			get_app $host $1
 		done
 		;;
+	
+	# These are executed on the remote system
+
+	setup-packages)
+		setup_packages
+		;;
+	deploy-remote)
+		shift
+		deploy_container $@
+		;;
+	undeploy-remote)
+		shift
+		undeploy_container $@
+		;;
+
 	*)
 		echo "Unknown command: $command"
 		;;
