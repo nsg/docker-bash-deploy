@@ -151,6 +151,7 @@ fi
 # Deploy a container
 if [ $__deploy ] && [ $__image ]; then
 	for host in $hosts; do
+		echo -e "\e[1m$host\e[0m: "
 		remote_command $host deploy $__deploy $__image
 	done
 fi
@@ -158,6 +159,7 @@ fi
 # Undeploy a container
 if [ $__undeploy ]; then
 	for host in $hosts; do
+		echo -e "\e[1m$host\e[0m: "
 		remote_command $host undeploy $__undeploy
 	done
 fi
