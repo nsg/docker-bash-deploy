@@ -17,9 +17,9 @@ After that, install the needed applications on the target servers with:
 
 All done, deploy for example nginx:
 
-`./local-deploy -c myservers -d webserver -i nginx`
+`./local-deploy -c myservers -d webserver -i nginx -o example.com`
 
-This will download the image `nginx` to `10.0.0.2` and `10.0.0.3` and make it available on `webserver.stefanberggren.se`.
+This will download the image `nginx` to `10.0.0.2` and `10.0.0.3` and make it available on `webserver.example.com`.
 
 ## More?
 

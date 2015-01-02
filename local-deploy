@@ -23,6 +23,9 @@ show_help() {
 	echo -e "          example: -a myapp -k foo -v bar"
 	echo -e "-s        Show server status and running containers."
 	echo -e "-a app    Select a container, use with -k"
+	echo -e "-o domain Select a domain"
+	echo -e "          This overloads settings from -c"
+	exit 0
 }
 
 load_config() {
@@ -34,15 +37,17 @@ load_config() {
 	fi
 
 	hosts="$(awk -F'=' '/servers/{print $NF}' $file)"
+	domain="$(awk -F'=' '/domain/{print $NF}' $file)"
 }
 
 get_app() {
 	local host=$1
-	local app=$2
+	local domain=$2
+	local app=$3
 
 	echo -e "\e[1m$host\e[0m:"
 	remote_command_raw $host "
-		for f in /tmp/docker/$app/*; do
+		for f in /tmp/docker/$domain/$app/*; do
 			echo -n \"\${f##*/} ↠ \"; cat \$f;
 		done"
 	echo
@@ -62,15 +67,16 @@ remote_command_raw() {
 
 save_metadata() {
 	local host=$1
-	local app=$2
-	local key=$3
-	local value=$4
+	local domain=$2
+	local app=$3
+	local key=$4
+	local value=$5
 
-	remote_command_raw $host "mkdir -p /tmp/docker/$app"
-	remote_command_raw $host "echo $value > /tmp/docker/$app/$key"
+	remote_command_raw $host "mkdir -p /tmp/docker/$domain/$app"
+	remote_command_raw $host "echo $value > /tmp/docker/$domain/$app/$key"
 }
 
-while getopts "hDc:Ild:u:i:H:sk:v:a:" opt; do
+while getopts "hDc:Ild:u:i:H:sk:v:a:o:" opt; do
 	case $opt in
 		h)
 			show_help
@@ -111,6 +117,9 @@ while getopts "hDc:Ild:u:i:H:sk:v:a:" opt; do
 		a)
 			__app="$OPTARG"
 			;;
+		o)
+			__domain="$OPTARG"
+			;;
 	esac
 done
 
@@ -128,7 +137,11 @@ fi
 if [ $__host ]; then
 	hosts=$__host
 fi
+if [ $__domain ]; then
+	domain=$__domain
+fi
 [ $__debug ] && echo "hosts: $hosts"
+[ $__debug ] && echo "domain: $domain"
 
 # Install the remote half of the script
 if [ $__install ]; then
@@ -149,18 +162,18 @@ if [ $__list ]; then
 fi
 
 # Deploy a container
-if [ $__deploy ] && [ $__image ]; then
+if [ $__deploy ] && [ $__image ] && [ $domain ]; then
 	for host in $hosts; do
 		echo -e "\e[1m$host\e[0m: "
-		remote_command $host deploy $__deploy $__image
+		remote_command $host deploy $domain $__deploy $__image
 	done
 fi
 
 # Undeploy a container
-if [ $__undeploy ]; then
+if [ $__undeploy ] && [ $domain ]; then
 	for host in $hosts; do
 		echo -e "\e[1m$host\e[0m: "
-		remote_command $host undeploy $__undeploy
+		remote_command $host undeploy $domain $__undeploy
 	done
 fi
 
@@ -178,13 +191,13 @@ if [ $__servers ]; then
 fi
 
 # Set metadata
-if [ $__app ] && [ $__key ] && [ $__value ]; then
+if [ $__app ] && [ $__key ] && [ $__value ] && [ $domain ]; then
 	for host in $hosts; do
-		echo "set $__app: $__key=$__value at $host"
-		save_metadata $host $__app $__key $__value
+		echo "set $__app.$domain: $__key=$__value at $host"
+		save_metadata $host $domain $__app $__key $__value
 	done
-elif [ $__app ]; then
+elif [ $__app ] && [ $domain ]; then
 	for host in $hosts; do
-		get_app $host $__app
+		get_app $host $domain $__app
 	done
 fi

@@ -1,43 +1,48 @@
 #!/bin/bash
 
 deploy_container() {
-	local app=$1
-	local image=$2
+	local domain=$1
+	local app=$2
+	local image=$3
 	local port=$(find_free_port)
 
-	mkdir -p /tmp/docker/$app
+	mkdir -p /tmp/docker/$domain/$app
 
-	echo -e "Deploying \e[1m$app\e[0m ($image) on port $port"
-	echo $port > /tmp/docker/$app/port
-	local app_id=$(docker run -d -p $port:80 --name app-$app-$port-$RANDOM $image)
+	echo -e "Deploying \e[1m$app.$domain\e[0m ($image) on port $port"
+	echo $port > /tmp/docker/$domain/$app/port
+	local app_id=$(docker run -d -p $port:80 --name app-$domain-$app-$port-$RANDOM $image)
 
-	configure_nginx $app $port
-	save_metadata $app id $app_id
-	save_metadata $app image $image
+	configure_nginx $domain $app $port
+	save_metadata $domain $app id $app_id
+	save_metadata $domain $app app $app
+	save_metadata $domain $app image $image
+	save_metadata $domain $app domain $domain
 
-	echo "Finding old instances of $app to undeploy"
-	for id in $(docker ps --no-trunc | grep -v :$port | grep app-${app}- | awk '{print $1}'); do
+	echo "Finding old instances of $app.$domain to undeploy"
+	for id in $(docker ps --no-trunc | grep -v :$port | grep app-${domain}-${app}- | awk '{print $1}'); do
 		docker stop $id
 	done
 }
 
 undeploy_container() {
-	local app=$1
+	local domain=$1
+	local app=$2
 
-	if [ x$(has_app $app) == xyes ]; then
-		echo -e "\e[1mUndeploy $app\e[0m"
-		docker stop $(cat /tmp/docker/$app/id)
-		rm -f /etc/nginx/conf.d/${app}.conf
+	if [ x$(has_app $domain $app) == xyes ]; then
+		echo -e "\e[1mUndeploy $app.$domain\e[0m"
+		docker stop $(cat /tmp/docker/$domain/$app/id)
+		rm -f /etc/nginx/conf.d/${domain}-${app}.conf
 		nginx -s reload
-		rm -rf /tmp/docker/$app
+		rm -rf /tmp/docker/$domain/$app
 	fi
 }
 
 has_app() {
-	local chapp=$1
+	local domain=$1
+	local chapp=$2
 
 	for uid in $(docker ps --no-trunc -q); do
-		local app=$(get_app_from_id $uid)
+		local app=$(get_app_from_id_with_domain $domain $uid)
 		if [ x$app == x$chapp ]; then
 			echo yes
 			return;
@@ -45,42 +50,55 @@ has_app() {
 	done
 }
 
-get_app_from_id() {
+get_app_from_id_with_domain() {
+	local domain=$1
+	local uid=$2
+
+	grep -l $uid /tmp/docker/$domain/*/id | awk -F'/' '{print $5}'
+}
+
+get_domain_app_from_id() {
 	local uid=$1
 
-	grep -l $uid /tmp/docker/*/id | awk -F'/' '{print $4}'
+	local path=$(grep -l $uid /tmp/docker/*/*/id)
+	path=${path%/id}
+
+	echo $(cat $path/domain) $(cat $path/app)
 }
 
 configure_nginx() {
-	local app=$1
-	local port=$2
+	local domain=$1
+	local app=$2
+	local port=$3
 
 	echo "
 	server {
 		listen 80;
-		server_name ${app}.stefanberggren.se;
+		server_name ${app}.$domain;
 		location / {
 			proxy_pass http://127.0.0.1:$port;
 		}
 	}
-	" > /etc/nginx/conf.d/${app}.conf
+	" > /etc/nginx/conf.d/${domain}-${app}.conf
 	nginx -s reload
 }
 
 save_metadata() {
-	local app=$1
-	local key=$2
-	local value=$3
+	local domain=$1
+	local app=$2
+	local key=$3
+	local value=$4
 
-	mkdir -p /tmp/docker/$app
-	echo $value > /tmp/docker/$app/$key
+	mkdir -p /tmp/docker/$domain/$app
+	echo $value > /tmp/docker/$domain/$app/$key
 }
 
 get_metadata() {
-	local app=$1
-	local key=$2
+	local domain=$1
+	local app=$2
+	local key=$3
 
-	cat /tmp/docker/$app/$key
+	cat /tmp/docker/$domain/$app/$key
 }
 
 find_free_port() {
@@ -126,20 +144,24 @@ check_release() {
 
 list_apps() {
 	for uid in $(docker ps --no-trunc -q); do
-		local app=$(get_app_from_id $uid)
-		local port=$(get_metadata $app port)
-		local image=$(get_metadata $app image)
+		local domain_app=$(get_domain_app_from_id $uid)
 
-		echo "$app($image):80 ⇄ $port"
+		local domain=$(echo $domain_app | awk '{print $1}')
+		local app=$(echo $domain_app | awk '{print $2}')
+		local port=$(get_metadata $domain $app port)
+		local image=$(get_metadata $domain $app image)
+		local domain=$(get_metadata $domain $app domain)
+
+		echo "$app.$domain ($image):80 ⇄ $port"
 	done
 }
 
 case $1 in
 	deploy)
-		deploy_container $2 $3
+		deploy_container $2 $3 $4
 		;;
 	undeploy)
-		undeploy_container $2
+		undeploy_container $2 $3
 		;;
 	setup)
 		setup_host
