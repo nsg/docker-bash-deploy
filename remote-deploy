@@ -5,14 +5,22 @@ deploy_container() {
 	local app=$2
 	local image=$3
 	local port=$(find_free_port)
+	local default=$4
 
 	mkdir -p /tmp/docker/$domain/$app
 
-	echo -e "Deploying \e[1m$app.$domain\e[0m ($image) on port $port"
+	if [ $default ]; then
+		echo -e "Deploying \e[1m$app.$domain\e[0m ($image) on port $port set to \e[1mdefault\e[0m"
+		save_metadata $domain $app default true
+	else
+		echo -e "Deploying \e[1m$app.$domain\e[0m ($image) on port $port"
+		save_metadata $domain $app default false
+	fi
+
 	echo $port > /tmp/docker/$domain/$app/port
 	local app_id=$(docker run -d -p $port:80 --name app-$domain-$app-$port-$RANDOM $image)
 
-	configure_nginx $domain $app $port
+	configure_nginx $domain $app $port $default
 	save_metadata $domain $app id $app_id
 	save_metadata $domain $app app $app
 	save_metadata $domain $app image $image
@@ -70,10 +78,17 @@ configure_nginx() {
 	local domain=$1
 	local app=$2
 	local port=$3
+	local listen=$4
+	
+	if [ $listen ]; then
+		listen="80 default";
+	else
+		listen=80;
+	fi
 
 	echo "
 	server {
-		listen 80;
+		listen $listen;
 		server_name ${app}.$domain;
 		location / {
 			proxy_pass http://127.0.0.1:$port;
@@ -150,15 +165,20 @@ list_apps() {
 		local app=$(echo $domain_app | awk '{print $2}')
 		local port=$(get_metadata $domain $app port)
 		local image=$(get_metadata $domain $app image)
-		local domain=$(get_metadata $domain $app domain)
+		local default=$(get_metadata $domain $app default)
 
-		echo "$app.$domain ($image):80 ⇄ $port"
+		if [ $default ]; then
+			echo "$app.$domain ($image):80 ⇄ $port [default]"
+		else
+			echo "$app.$domain ($image):80 ⇄ $port"
+		fi
+
 	done
 }
 
 case $1 in
 	deploy)
-		deploy_container $2 $3 $4
+		deploy_container $2 $3 $4 $5
 		;;
 	undeploy)
 		undeploy_container $2 $3

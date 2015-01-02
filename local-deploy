@@ -25,6 +25,7 @@ show_help() {
 	echo -e "-a app    Select a container, use with -k"
 	echo -e "-o domain Select a domain"
 	echo -e "          This overloads settings from -c"
+	echo -e "-f        Set this app as the default container."
 	exit 0
 }
 
@@ -76,7 +77,7 @@ save_metadata() {
 	remote_command_raw $host "echo $value > /tmp/docker/$domain/$app/$key"
 }
 
-while getopts "hDc:Ild:u:i:H:sk:v:a:o:" opt; do
+while getopts "hDc:Ild:u:i:H:sk:v:a:o:f" opt; do
 	case $opt in
 		h)
 			show_help
@@ -119,6 +120,9 @@ while getopts "hDc:Ild:u:i:H:sk:v:a:o:" opt; do
 			;;
 		o)
 			__domain="$OPTARG"
+			;;
+		f)
+			__default=true
 			;;
 	esac
 done
@@ -165,7 +169,11 @@ fi
 if [ $__deploy ] && [ $__image ] && [ $domain ]; then
 	for host in $hosts; do
 		echo -e "\e[1m$host\e[0m: "
-		remote_command $host deploy $domain $__deploy $__image
+		if [ $__default ]; then
+			remote_command $host deploy $domain $__deploy $__image $__default
+		else
+			remote_command $host deploy $domain $__deploy $__image
+		fi
 	done
 fi
 
