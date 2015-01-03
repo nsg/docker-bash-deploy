@@ -24,3 +24,20 @@ This will download the image `nginx` to `10.0.0.2` and `10.0.0.3` and make it av
 ## More?
 
 Type `./local-deploy -h`
+
+## Examples
+
+### My blog
+
+First time, we need to set the key `default` to set the container as the default nginx site
+(so that both nsg.cc and www.nsg.cc will work).
+
+```
+./local-deploy -a www -o nsg.cc -k default -v true
+```
+
+Time to deploy it...
+
+```
+./local-deploy -d www -i nsgb/blog:1.3 -o nsg.cc
+```
