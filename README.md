@@ -1,4 +1,4 @@
-# Docker Bash Deploy
+# shdeploy
 
 This is a quick just-for-fun bash script that deploys Docker containers to servers running Ubuntu 14.04 LTS. It is fully usable but quite untested.
 
