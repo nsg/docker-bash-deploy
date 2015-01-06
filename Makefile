@@ -12,3 +12,5 @@ install: test
 	cp remote-deploy /var/lib/shdeploy/shremote
 	sed -i 's/^REMOTE_DEPLOY_COMMAND=.*/REMOTE_DEPLOY_COMMAND=\/var\/lib\/shdeploy\/shremote/' \
 		/usr/local/bin/shdeploy
+	sed -i 's/^GIT_VERSION=.*/GIT_VERSION=`git rev-parse --short HEAD`/' \
+		/usr/local/bin/shdeploy

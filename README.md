@@ -4,7 +4,13 @@ This is a quick just-for-fun bash script that deploys Docker containers to serve
 
 ## Install
 
-Type `make install` to install it. The command will be called `shdeploy`
+```
+git clone https://github.com/nsg/shdeploy.git
+cd shdeploy
+sudo make install
+```
+
+The command will be called `shdeploy`
 To test the command w/o a installation use `./local-deploy`.
 
 ## Quick test

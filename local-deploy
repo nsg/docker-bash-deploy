@@ -1,9 +1,10 @@
 #!/bin/bash
 
 REMOTE_DEPLOY_COMMAND=remote-deploy
+GIT_VERSION=HEAD
 
 show_help() {
-	echo -e "\e[1mdocker-bash-deploy\e[0m"
+	echo -e "\e[1m$0\e[0m based on commit $GIT_VERSION"
 	echo -e "\tThis is a simple deployment tool written in bash."
 	echo
 	echo -e "usage:    $0 params"
