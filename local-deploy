@@ -1,5 +1,7 @@
 #!/bin/bash
 
+REMOTE_DEPLOY_COMMAND=remote-deploy
+
 show_help() {
 	echo -e "\e[1mdocker-bash-deploy\e[0m"
 	echo -e "\tThis is a simple deployment tool written in bash."
@@ -150,7 +152,7 @@ fi
 # Install the remote half of the script
 if [ $__install ]; then
 	for host in $hosts; do
-		scp remote-deploy root@$host:/usr/local/bin/deploy
+		scp $REMOTE_DEPLOY_COMMAND root@$host:/usr/local/bin/deploy
 		ssh root@$host chmod +x /usr/local/bin/deploy
 		remote_command $host setup
 	done
