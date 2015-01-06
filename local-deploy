@@ -59,7 +59,7 @@ get_app() {
 remote_command() {
 	local host=$1
 	shift
-	ssh -l root $host deploy $@
+	ssh -l root $host deploy $GIT_VERSION $@
 }
 
 remote_command_raw() {

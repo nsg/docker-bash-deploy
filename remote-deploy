@@ -1,5 +1,18 @@
 #!/bin/bash
 
+GIT_VERSION=HEAD
+
+# Version check
+if [ "x$1" != "x$GIT_VERSION" ]; then
+	echo "Error : Version mismatch"
+	echo "Local : $1"
+	echo "Remote: $GIT_VERSION"
+	echo "Aborted, upgrade the remote version with -I"
+	exit 1
+fi
+
+shift
+
 deploy_container() {
 	local domain=$1
 	local app=$2
@@ -183,5 +196,8 @@ case $1 in
 		;;
 	list)
 		list_apps
+		;;
+	version)
+		echo $GIT_VERSION
 		;;
 esac
