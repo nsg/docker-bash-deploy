@@ -175,11 +175,23 @@ list_apps() {
 		local image=$(get_metadata $domain $app image)
 		local default=$(get_metadata $domain $app default)
 
+		echo -n "$app.$domain ($image):80 ⇄ $port"
+
+		# Is this the default container
 		if [ $default ]; then
-			echo "$app.$domain ($image):80 ⇄ $port [default]"
-		else
-			echo "$app.$domain ($image):80 ⇄ $port"
+			echo -n " [default]"
 		fi
+
+		# DNS lookup
+		for record in A AAAA; do
+			for ip in $(dig +short $record $app.$domain); do
+				if ip addr | grep -qi $ip; then
+					echo -n " [DNS:$record]"
+				fi
+			done
+		done
+
+		echo # newline
 
 	done
 }
