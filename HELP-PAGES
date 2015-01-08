@@ -1,88 +1,84 @@
 
 
- ./local-deploy ommand
+ ./local-deploy deploy
 
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
 
-usage:    local-deploy [deploy|undeploy|meta|list|install|config] [-DcH]
+usage:    local-deploy deploy -[aio]
 
-  -D        Show debug messages
-  -c path   Path to config file
-            Default is ~/.docker-bash-deploy
-  -H host   Provide a list of hosts on the commandline
-            This overloads settings from -c
+Deploy a new, or replace a container.
+
+  -a      The name of the app
+  -i      Name of the image
+  -o      The domain
 
 Example:
 
-To limit a deploy to a specific host
-local-deploy deploy -H 10.0.0.2 -i nginx test -a text -o example.com
-
-Specify a custom config file
-local-deploy deploy -c ../myfile -i nginx test -a text -o example.com
+To deploy the image nginx on test.example.com:
+local-deploy deploy -i nginx -a test -o example.com
 
 
- ./local-deploy ommand
+ ./local-deploy undeploy
 
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
 
-usage:    local-deploy [deploy|undeploy|meta|list|install|config] [-DcH]
+usage:    local-deploy undeploy -[ao]
 
-  -D        Show debug messages
-  -c path   Path to config file
-            Default is ~/.docker-bash-deploy
-  -H host   Provide a list of hosts on the commandline
-            This overloads settings from -c
+Undeploy (remove) a container.
+
+  -a      The name of the app
+  -o      The domain
 
 Example:
 
-To limit a deploy to a specific host
-local-deploy deploy -H 10.0.0.2 -i nginx test -a text -o example.com
-
-Specify a custom config file
-local-deploy deploy -c ../myfile -i nginx test -a text -o example.com
+To undeploy test.example.com:
+local-deploy undeploy -a test -o example.com
 
 
- ./local-deploy ommand
+ ./local-deploy meta
 
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
 
-usage:    local-deploy [deploy|undeploy|meta|list|install|config] [-DcH]
+usage:    local-deploy meta -[aokv]
+usage:    local-deploy meta -[ao]
 
-  -D        Show debug messages
-  -c path   Path to config file
-            Default is ~/.docker-bash-deploy
-  -H host   Provide a list of hosts on the commandline
-            This overloads settings from -c
+Set or get metadata to an app.
 
-Example:
+  -a      The name of the app
+  -o      The domain
+  -k      Name of the key
+  -v      Name of the value
 
-To limit a deploy to a specific host
-local-deploy deploy -H 10.0.0.2 -i nginx test -a text -o example.com
+Set the value (-v) to false to remove a key.
 
-Specify a custom config file
-local-deploy deploy -c ../myfile -i nginx test -a text -o example.com
+Special keys:
+
+  default      This is the default nginx container.
+
+Examples:
+
+To get metadata for test.example.com:
+local-deploy meta -a test -o example.com
+
+Set metadata for test.example.com:
+local-deploy meta -a test -o example.com -k mykey -v myvalue
 
 
- ./local-deploy ommand
+ ./local-deploy install
 
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
 
-usage:    local-deploy [deploy|undeploy|meta|list|install|config] [-DcH]
+usage:    local-deploy install [full|remote]
 
-  -D        Show debug messages
-  -c path   Path to config file
-            Default is ~/.docker-bash-deploy
-  -H host   Provide a list of hosts on the commandline
-            This overloads settings from -c
+  full      Check installed apps and do a full reconfigure.
+  remote    Only update the remote script.
 
-Example:
+Setup the servers, install needed applications.
 
-To limit a deploy to a specific host
-local-deploy deploy -H 10.0.0.2 -i nginx test -a text -o example.com
-
-Specify a custom config file
-local-deploy deploy -c ../myfile -i nginx test -a text -o example.com
+First time using this tool? You need to have passwordless root
+access to the server. Verify that with 'ssh root@example.com'.
+Do a full install with local-deploy install full.
