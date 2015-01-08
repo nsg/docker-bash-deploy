@@ -72,8 +72,18 @@ show_help() {
 			echo -e "access to the server. Verify that with 'ssh root@example.com'."
 			echo -e "Do a full install with $0 install full."
 			;;
+		config)
+			echo -e "usage:    $0 \e[1mconfig show\e[0m"
+			echo
+			echo -e "  \e[1mshow\e[0m      Show loaded config."
+			echo
+			echo -e "Example configuration file:"
+			echo
+			echo -e "  servers=10.0.0.2 example.com"
+			echo -e "  domain=example.com"
+			;;
 		*)
-			echo -e "usage:    $0 \e[1m[deploy|undeploy|meta|list|install] [-DcH]\e[0m"
+			echo -e "usage:    $0 \e[1m[deploy|undeploy|meta|list|install|config] [-DcH]\e[0m"
 			echo
 			echo -e "  \e[1m-D\e[0m        Show debug messages"
 			echo -e "  \e[1m-c path\e[0m   Path to config file"
@@ -88,11 +98,6 @@ show_help() {
 			echo
 			echo -e "Specify a custom config file"
 			echo -e "$0 deploy \e[1m-c ../myfile\e[0m" -i nginx test -a text -o example.com
-			echo
-			echo -e "Configuration file:"
-			echo
-			echo -e "  servers=10.0.0.2 example.com"
-			echo -e "  domain=example.com"
 	esac
 
 	exit 0
@@ -152,6 +157,11 @@ save_metadata() {
 
 # Select mode
 case $1 in
+	config)
+		__show_config=true
+		[ -z $2 ] && show_help $1
+		shift 2
+		;;
 	list)
 		__list=true
 		shift
@@ -236,6 +246,20 @@ if [ $__domain ]; then
 fi
 [ $__debug ] && echo "hosts: $hosts"
 [ $__debug ] && echo "domain: $domain"
+
+# Show config
+if [ $__show_config ]; then
+	echo "Loaded config file:"
+	if [ $__config ]; then
+		cat $__config
+	else
+		cat ~/.docker-bash-deploy
+	fi
+	echo
+	echo "Set config to:"
+	echo "servers=$hosts"
+	echo "domain=$domain"
+fi
 
 # Install the remote half of the script
 if [ $__install ]; then
