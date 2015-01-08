@@ -19,3 +19,4 @@ install: test
 
 help-pages:
 	for command in deploy undeploy meta install; do echo -e "\n\n" ./local-deploy $command; echo; ./local-deploy $command; done > HELP-PAGES
+	sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" -i HELP-PAGES

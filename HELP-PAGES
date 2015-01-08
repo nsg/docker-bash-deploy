@@ -2,87 +2,87 @@
 
  ./local-deploy ommand
 
-[1mlocal-deploy[0m based on commit HEAD
+local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
 
-usage:    local-deploy [1m[deploy|undeploy|meta|list|install|config] [-DcH][0m
+usage:    local-deploy [deploy|undeploy|meta|list|install|config] [-DcH]
 
-  [1m-D[0m        Show debug messages
-  [1m-c path[0m   Path to config file
+  -D        Show debug messages
+  -c path   Path to config file
             Default is ~/.docker-bash-deploy
-  [1m-H host[0m   Provide a list of hosts on the commandline
+  -H host   Provide a list of hosts on the commandline
             This overloads settings from -c
 
 Example:
 
 To limit a deploy to a specific host
-local-deploy deploy [1m-H 10.0.0.2[0m -i nginx test -a text -o example.com
+local-deploy deploy -H 10.0.0.2 -i nginx test -a text -o example.com
 
 Specify a custom config file
-local-deploy deploy [1m-c ../myfile[0m -i nginx test -a text -o example.com
+local-deploy deploy -c ../myfile -i nginx test -a text -o example.com
 -e 
 
  ./local-deploy ommand
 
-[1mlocal-deploy[0m based on commit HEAD
+local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
 
-usage:    local-deploy [1m[deploy|undeploy|meta|list|install|config] [-DcH][0m
+usage:    local-deploy [deploy|undeploy|meta|list|install|config] [-DcH]
 
-  [1m-D[0m        Show debug messages
-  [1m-c path[0m   Path to config file
+  -D        Show debug messages
+  -c path   Path to config file
             Default is ~/.docker-bash-deploy
-  [1m-H host[0m   Provide a list of hosts on the commandline
+  -H host   Provide a list of hosts on the commandline
             This overloads settings from -c
 
 Example:
 
 To limit a deploy to a specific host
-local-deploy deploy [1m-H 10.0.0.2[0m -i nginx test -a text -o example.com
+local-deploy deploy -H 10.0.0.2 -i nginx test -a text -o example.com
 
 Specify a custom config file
-local-deploy deploy [1m-c ../myfile[0m -i nginx test -a text -o example.com
+local-deploy deploy -c ../myfile -i nginx test -a text -o example.com
 -e 
 
  ./local-deploy ommand
 
-[1mlocal-deploy[0m based on commit HEAD
+local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
 
-usage:    local-deploy [1m[deploy|undeploy|meta|list|install|config] [-DcH][0m
+usage:    local-deploy [deploy|undeploy|meta|list|install|config] [-DcH]
 
-  [1m-D[0m        Show debug messages
-  [1m-c path[0m   Path to config file
+  -D        Show debug messages
+  -c path   Path to config file
             Default is ~/.docker-bash-deploy
-  [1m-H host[0m   Provide a list of hosts on the commandline
+  -H host   Provide a list of hosts on the commandline
             This overloads settings from -c
 
 Example:
 
 To limit a deploy to a specific host
-local-deploy deploy [1m-H 10.0.0.2[0m -i nginx test -a text -o example.com
+local-deploy deploy -H 10.0.0.2 -i nginx test -a text -o example.com
 
 Specify a custom config file
-local-deploy deploy [1m-c ../myfile[0m -i nginx test -a text -o example.com
+local-deploy deploy -c ../myfile -i nginx test -a text -o example.com
 -e 
 
  ./local-deploy ommand
 
-[1mlocal-deploy[0m based on commit HEAD
+local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
 
-usage:    local-deploy [1m[deploy|undeploy|meta|list|install|config] [-DcH][0m
+usage:    local-deploy [deploy|undeploy|meta|list|install|config] [-DcH]
 
-  [1m-D[0m        Show debug messages
-  [1m-c path[0m   Path to config file
+  -D        Show debug messages
+  -c path   Path to config file
             Default is ~/.docker-bash-deploy
-  [1m-H host[0m   Provide a list of hosts on the commandline
+  -H host   Provide a list of hosts on the commandline
             This overloads settings from -c
 
 Example:
 
 To limit a deploy to a specific host
-local-deploy deploy [1m-H 10.0.0.2[0m -i nginx test -a text -o example.com
+local-deploy deploy -H 10.0.0.2 -i nginx test -a text -o example.com
 
 Specify a custom config file
-local-deploy deploy [1m-c ../myfile[0m -i nginx test -a text -o example.com
+local-deploy deploy -c ../myfile -i nginx test -a text -o example.com
