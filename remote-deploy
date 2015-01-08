@@ -22,8 +22,16 @@ deploy_container() {
 	if [ "x$(app_in_dns $app $domain)" == xtrue ]; then
 		mkdir -p /tmp/docker/$domain/$app
 
+		# Generate enviroment
+		local env_list
+		for env in /tmp/docker/$domain/$app/ENV_*; do
+			if [ -f $env ]; then
+				env_list="$env_list -e $(basename ${env:4})=\"$(cat $env)\" ";
+			fi
+		done
+
 		echo -e "Deploying \e[1m$app.$domain\e[0m ($image) on port $port"
-		local app_id=$(docker run -d -p $port:80 \
+		local app_id=$(docker run -d -p $port:80 $env_list \
 			--name app-$domain-$app-$port-$RANDOM $image)
 
 		configure_nginx $domain $app $port
