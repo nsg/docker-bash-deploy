@@ -41,7 +41,7 @@ This will download the image `nginx` to `10.0.0.2` and `10.0.0.3` and make it av
 
 ## More?
 
-Type `shdeploy` for help.
+Type `shdeploy` for help, or see [HELP-PAGES](HELP-PAGES).
 
 ## Examples
 
