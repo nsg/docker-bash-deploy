@@ -93,13 +93,21 @@ case $1 in
 		__install=true
 		shift
 		;;
+	deploy)
+		__deploy=true
+		shift
+		;;
+	meta)
+		__metadata=true
+		shift
+		;;
 	*)
 		show_help
 		;;
 esac
 
 # Global flags
-while getopts "hDc:d:u:i:H:sk:v:a:o:" opt; do
+while getopts "hDc:u:i:H:sk:v:a:o:" opt; do
 	case $opt in
 		h)
 			show_help
@@ -109,9 +117,6 @@ while getopts "hDc:d:u:i:H:sk:v:a:o:" opt; do
 			;;
 		c)
 			__config="$OPTARG"
-			;;
-		d)
-			__deploy="$OPTARG"
 			;;
 		u)
 			__undeploy="$OPTARG"
@@ -179,10 +184,10 @@ if [ $__list ]; then
 fi
 
 # Deploy a container
-if [ $__deploy ] && [ $__image ] && [ $domain ]; then
+if [ $__deploy ] && [ $__app ] && [ $__image ] && [ $domain ]; then
 	for host in $hosts; do
 		echo -e "\e[1m$host\e[0m: "
-		remote_command $host deploy $domain $__deploy $__image
+		remote_command $host deploy $domain $__app $__image
 	done
 fi
 
@@ -208,12 +213,12 @@ if [ $__servers ]; then
 fi
 
 # Set metadata
-if [ $__app ] && [ $__key ] && [ $__value ] && [ $domain ]; then
+if [ $__metadata ] && [ $__app ] && [ $__key ] && [ $__value ] && [ $domain ]; then
 	for host in $hosts; do
 		echo "set $__app.$domain: $__key=$__value at $host"
 		save_metadata $host $domain $__app $__key $__value
 	done
-elif [ $__app ] && [ $domain ]; then
+elif [ $__metadata ] && [ $__app ] && [ $domain ]; then
 	for host in $hosts; do
 		get_app $host $domain $__app
 	done
