@@ -19,17 +19,20 @@ deploy_container() {
 	local image=$3
 	local port=$(find_free_port)
 
-	mkdir -p /tmp/docker/$domain/$app
+	if [ "x$(app_in_dns $app $domain)" == xtrue ]; then
+		mkdir -p /tmp/docker/$domain/$app
 
-	echo -e "Deploying \e[1m$app.$domain\e[0m ($image) on port $port"
-	local app_id=$(docker run -d -p $port:80 --name app-$domain-$app-$port-$RANDOM $image)
+		echo -e "Deploying \e[1m$app.$domain\e[0m ($image) on port $port"
+		local app_id=$(docker run -d -p $port:80 \
+			--name app-$domain-$app-$port-$RANDOM $image)
 
-	configure_nginx $domain $app $port
-	save_metadata $domain $app id $app_id
-	save_metadata $domain $app app $app
-	save_metadata $domain $app port $port
-	save_metadata $domain $app image $image
-	save_metadata $domain $app domain $domain
+		configure_nginx $domain $app $port
+		save_metadata $domain $app id $app_id
+		save_metadata $domain $app app $app
+		save_metadata $domain $app port $port
+		save_metadata $domain $app image $image
+		save_metadata $domain $app domain $domain
+	fi
 
 	echo "Finding old instances of $app.$domain to undeploy"
 	for id in $(docker ps --no-trunc | grep -v :$port | grep app-${domain}-${app}- | awk '{print $1}'); do
@@ -130,6 +133,20 @@ find_free_port() {
 			echo $port;
 			break;
 		fi;
+	done
+}
+
+app_in_dns() {
+	local app=$1
+	local domain=$2
+
+	for record in A AAAA; do
+		for ip in $(dig +short $record $app.$domain); do
+			if ip addr | grep -qi $ip; then
+				echo true
+				return
+			fi
+		done
 	done
 }
 
