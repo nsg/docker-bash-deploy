@@ -1,5 +1,27 @@
 
 
+ ./local-deploy none
+
+local-deploy based on commit HEAD
+This is a simple deployment tool written in bash.
+
+usage:    local-deploy [deploy|undeploy|meta|list|install|config] [-DcH]
+
+  -D        Show debug messages
+  -c path   Path to config file
+            Default is ~/.docker-bash-deploy
+  -H host   Provide a list of hosts on the commandline
+            This overloads settings from -c
+
+Example:
+
+To limit a deploy to a specific host
+local-deploy deploy -H 10.0.0.2 -i nginx test -a text -o example.com
+
+Specify a custom config file
+local-deploy deploy -c ../myfile -i nginx test -a text -o example.com
+
+
  ./local-deploy deploy
 
 local-deploy based on commit HEAD
