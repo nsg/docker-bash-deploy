@@ -5,29 +5,96 @@ GIT_VERSION=HEAD
 
 show_help() {
 	echo -e "\e[1m$0\e[0m based on commit $GIT_VERSION"
-	echo -e "\tThis is a simple deployment tool written in bash."
+	echo -e "This is a simple deployment tool written in bash."
 	echo
-	echo -e "usage:    $0 params"
-	echo
-	echo -e "-h        This help page"
-	echo -e "-D        Show debug messages"
-	echo -e "-c path   Path to config file"
-    echo -e "          Default is ~/.docker-bash-deploy"
-	echo -e "-H host   Provide a list of hosts on the commandline"
-	echo -e "          This overloads settings from -c"
-	echo -e "-I        Install the tool and packages on the remote server(s)"
-	echo -e "-l        List running containers"
-	echo -e "-d name   Deploy a container called 'name', use with -i"
-	echo -e "          example: -d test -i nginx"
-	echo -e "-i image  Specify a image name, use with -d"
-	echo -e "-u name   Undeploy the container 'name'"
-	echo -e "-k key    Set or get a key on a server(s), use with -a"
-	echo -e "-v value  Set the value, in combination with -k and -H"
-	echo -e "          example: -a myapp -k foo -v bar"
-	echo -e "-s        Show server status and running containers."
-	echo -e "-a app    Select a container, use with -k"
-	echo -e "-o domain Select a domain"
-	echo -e "          This overloads settings from -c"
+	case $1 in
+		deploy)
+			echo -e "usage:    $0 \e[1mdeploy -[aio]\e[0m"
+			echo
+			echo -e "Deploy a new, or replace a container."
+			echo
+			echo -e "  \e[1m-a\e[0m      The name of the app"
+			echo -e "  \e[1m-i\e[0m      Name of the image"
+			echo -e "  \e[1m-o\e[0m      The domain"
+			echo
+			echo -e "Example:"
+			echo
+			echo -e "To deploy the image nginx on test.example.com:"
+			echo -e "$0 deploy -i nginx -a test -o example.com"
+			;;
+		undeploy)
+			echo -e "usage:    $0 \e[1mundeploy -[ao]\e[0m"
+			echo
+			echo -e "Undeploy (remove) a container."
+			echo
+			echo -e "  \e[1m-a\e[0m      The name of the app"
+			echo -e "  \e[1m-o\e[0m      The domain"
+			echo
+			echo -e "Example:"
+			echo
+			echo -e "To undeploy test.example.com:"
+			echo -e "$0 undeploy -a test -o example.com"
+			;;
+		meta)
+			echo -e "usage:    $0 \e[1mmeta -[aokv]\e[0m"
+			echo -e "usage:    $0 \e[1mmeta -[ao]\e[0m"
+			echo
+			echo -e "Set or get metadata to an app."
+			echo
+			echo -e "  \e[1m-a\e[0m      The name of the app"
+			echo -e "  \e[1m-o\e[0m      The domain"
+			echo -e "  \e[1m-k\e[0m      Name of the key"
+			echo -e "  \e[1m-v\e[0m      Name of the value"
+			echo
+			echo -e "Set the value (-v) to false to remove a key."
+			echo
+			echo -e "Special keys:"
+			echo
+			echo -e "  \e[1mdefault\e[0m      This is the default nginx container."
+			echo
+			echo -e "Examples:"
+			echo
+			echo -e "To get metadata for test.example.com:"
+			echo -e "$0 meta -a test -o example.com"
+			echo
+			echo -e "Set metadata for test.example.com:"
+			echo -e "$0 meta -a test -o example.com -k mykey -v myvalue"
+			;;
+		install)
+			echo -e "usage:    $0 \e[1minstall [full|remote]\e[0m"
+			echo
+			echo -e "  \e[1mfull\e[0m      Check installed apps and do a full reconfigure."
+			echo -e "  \e[1mremote\e[0m    Only update the remote script."
+			echo
+			echo -e "Setup the servers, install needed applications."
+			echo
+			echo -e "First time using this tool? You need to have passwordless root"
+			echo -e "access to the server. Verify that with 'ssh root@example.com'."
+			echo -e "Do a full install with $0 install full."
+			;;
+		*)
+			echo -e "usage:    $0 \e[1m[deploy|undeploy|meta|list|install] [-DcH]\e[0m"
+			echo
+			echo -e "  \e[1m-D\e[0m        Show debug messages"
+			echo -e "  \e[1m-c path\e[0m   Path to config file"
+			echo -e "            Default is ~/.docker-bash-deploy"
+			echo -e "  \e[1m-H host\e[0m   Provide a list of hosts on the commandline"
+			echo -e "            This overloads settings from -c"
+			echo
+			echo -e "Example:"
+			echo
+			echo -e "To limit a deploy to a specific host"
+			echo -e "$0 deploy \e[1m-H 10.0.0.2\e[0m" -i nginx test -a text -o example.com
+			echo
+			echo -e "Specify a custom config file"
+			echo -e "$0 deploy \e[1m-c ../myfile\e[0m" -i nginx test -a text -o example.com
+			echo
+			echo -e "Configuration file:"
+			echo
+			echo -e "  servers=10.0.0.2 example.com"
+			echo -e "  domain=example.com"
+	esac
+
 	exit 0
 }
 
@@ -90,19 +157,23 @@ case $1 in
 		shift
 		;;
 	install)
-		__install=true
+		__install=$2
+		[ -z $2 ] && show_help $1
 		shift
 		;;
 	deploy)
 		__deploy=true
+		[ -z $2 ] && show_help $1
 		shift
 		;;
 	undeploy)
 		__undeploy=true
+		[ -z $2 ] && show_help $1
 		shift
 		;;
 	meta)
 		__metadata=true
+		[ -z $2 ] && show_help $1
 		shift
 		;;
 	*)
@@ -169,9 +240,15 @@ fi
 # Install the remote half of the script
 if [ $__install ]; then
 	for host in $hosts; do
-		scp $REMOTE_DEPLOY_COMMAND root@$host:/usr/local/bin/deploy
-		ssh root@$host chmod +x /usr/local/bin/deploy
-		remote_command $host setup
+
+		if [ "x$__install" == "xfull" ] || [ "x$__install" == "xremote" ]; then
+			scp $REMOTE_DEPLOY_COMMAND root@$host:/usr/local/bin/deploy
+			ssh root@$host chmod +x /usr/local/bin/deploy
+		fi
+
+		if [ "x$__install" == "xfull" ]; then
+			remote_command $host setup
+		fi
 	done
 fi
 
