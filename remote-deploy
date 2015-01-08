@@ -7,7 +7,7 @@ if [ "x$1" != "x$GIT_VERSION" ]; then
 	echo "Error : Version mismatch"
 	echo "Local : $1"
 	echo "Remote: $GIT_VERSION"
-	echo "Aborted, upgrade the remote version with -I"
+	echo "Aborted, upgrade the remote version with 'install remote'"
 	exit 1
 fi
 
