@@ -2,6 +2,10 @@
 
 This is a quick just-for-fun bash script that deploys Docker containers to servers running Ubuntu 14.04 LTS. It is fully usable but quite untested.
 
+The script has two parts, the local script and a remote script that is installed on the remote systems. All needed dependencies (like docker, nginx, …) are installed by the script. The only local dependency is ssh (and make and git if you like to install this from source), so this will run on Linux, OS X, *BSD and so on... You need Linux on the server, and only Ubuntu 14.04 LTS is supported atm (this is easly extended).
+
+
+
 ## Install
 
 ```
