@@ -83,7 +83,23 @@ save_metadata() {
 	fi
 }
 
-while getopts "hDc:Ild:u:i:H:sk:v:a:o:" opt; do
+# Select mode
+case $1 in
+	list)
+		__list=true
+		shift
+		;;
+	install)
+		__install=true
+		shift
+		;;
+	*)
+		show_help
+		;;
+esac
+
+# Global flags
+while getopts "hDc:d:u:i:H:sk:v:a:o:" opt; do
 	case $opt in
 		h)
 			show_help
@@ -93,12 +109,6 @@ while getopts "hDc:Ild:u:i:H:sk:v:a:o:" opt; do
 			;;
 		c)
 			__config="$OPTARG"
-			;;
-		I)
-			__install=true
-			;;
-		l)
-			__list=true
 			;;
 		d)
 			__deploy="$OPTARG"
