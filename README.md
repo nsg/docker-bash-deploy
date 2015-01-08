@@ -2,7 +2,7 @@
 
 This is a quick just-for-fun bash script that deploys Docker containers to servers running Ubuntu 14.04 LTS. It is fully usable but quite untested.
 
-The script has two parts, the local script and a remote script that is installed on the remote systems. All needed dependencies (like docker, nginx, …) are installed by the script. The only local dependency is ssh (and make and git if you like to install this from source), so this will run on Linux, OS X, *BSD and so on... You need Linux on the server, and only Ubuntu 14.04 LTS is supported atm (this is easly extended).
+The script has two parts, the local script and a remote script that is installed on the remote systems. All needed dependencies (like docker, nginx, …) are installed by the script. The only local dependency is ssh (and make and git if you like to install this from source), so this will run on Linux, OS X, \*BSD and so on... You need Linux on the server, and only Ubuntu 14.04 LTS is supported atm (this is easly extended).
 
 
 
@@ -19,26 +19,29 @@ To test the command w/o a installation use `./local-deploy`.
 
 ## Quick test
 
-We need a file containing the servers, for example:
+We need a file containing the servers and our default domain, for example:
 ```
 $ cat myservers
 server=10.0.0.2 10.0.0.3
+domain=example.com
 ```
-We assume that you can login as root w/o any password.
+We assume that: 
+* You can login as root w/o any password to both servers.
+* The DNS \*.example.com points to at least one of the servers.
 
 After that, install the needed applications on the target servers with:
 
-`shdeploy -c myservers -I`
+`shdeploy install full -c myservers`
 
 All done, deploy for example nginx:
 
-`shdeploy -c myservers -d webserver -i nginx -o example.com`
+`shdeploy deploy -c myservers -a webserver -i nginx`
 
 This will download the image `nginx` to `10.0.0.2` and `10.0.0.3` and make it available on `webserver.example.com`.
 
 ## More?
 
-Type `shdeploy -h`
+Type `shdeploy` for help.
 
 ## Examples
 
@@ -48,11 +51,11 @@ First time, we need to set the key `default` to set the container as the default
 (so that both nsg.cc and www.nsg.cc will work).
 
 ```
-shdeploy -a www -o nsg.cc -k default -v true
+shdeploy meta -a www -o nsg.cc -k default -v true
 ```
 
 Time to deploy it...
 
 ```
-shdeploy -d www -i nsgb/blog:1.3 -o nsg.cc
+shdeploy deploy -a www -i nsgb/blog:1.3 -o nsg.cc
 ```
