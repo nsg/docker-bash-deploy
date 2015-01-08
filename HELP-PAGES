@@ -1,4 +1,4 @@
--e 
+
 
  ./local-deploy ommand
 
@@ -20,7 +20,7 @@ local-deploy deploy -H 10.0.0.2 -i nginx test -a text -o example.com
 
 Specify a custom config file
 local-deploy deploy -c ../myfile -i nginx test -a text -o example.com
--e 
+
 
  ./local-deploy ommand
 
@@ -42,7 +42,7 @@ local-deploy deploy -H 10.0.0.2 -i nginx test -a text -o example.com
 
 Specify a custom config file
 local-deploy deploy -c ../myfile -i nginx test -a text -o example.com
--e 
+
 
  ./local-deploy ommand
 
@@ -64,7 +64,7 @@ local-deploy deploy -H 10.0.0.2 -i nginx test -a text -o example.com
 
 Specify a custom config file
 local-deploy deploy -c ../myfile -i nginx test -a text -o example.com
--e 
+
 
  ./local-deploy ommand
 
