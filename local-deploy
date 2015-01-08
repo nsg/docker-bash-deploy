@@ -97,6 +97,10 @@ case $1 in
 		__deploy=true
 		shift
 		;;
+	undeploy)
+		__undeploy=true
+		shift
+		;;
 	meta)
 		__metadata=true
 		shift
@@ -107,7 +111,7 @@ case $1 in
 esac
 
 # Global flags
-while getopts "hDc:u:i:H:sk:v:a:o:" opt; do
+while getopts "hDc:i:H:sk:v:a:o:" opt; do
 	case $opt in
 		h)
 			show_help
@@ -117,9 +121,6 @@ while getopts "hDc:u:i:H:sk:v:a:o:" opt; do
 			;;
 		c)
 			__config="$OPTARG"
-			;;
-		u)
-			__undeploy="$OPTARG"
 			;;
 		i)
 			__image="$OPTARG"
@@ -192,10 +193,10 @@ if [ $__deploy ] && [ $__app ] && [ $__image ] && [ $domain ]; then
 fi
 
 # Undeploy a container
-if [ $__undeploy ] && [ $domain ]; then
+if [ $__undeploy ] && [ $__app ] && [ $domain ]; then
 	for host in $hosts; do
 		echo -e "\e[1m$host\e[0m: "
-		remote_command $host undeploy $domain $__undeploy
+		remote_command $host undeploy $domain $__app
 	done
 fi
 
