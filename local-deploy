@@ -51,6 +51,7 @@ show_help() {
 			echo -e "Special keys:"
 			echo
 			echo -e "  \e[1mdefault\e[0m      This is the default nginx container."
+			echo -e "  \e[1mENV_*\e[0m        To set the Docker env 'FOO', set ENV_FOO."
 			echo
 			echo -e "Examples:"
 			echo

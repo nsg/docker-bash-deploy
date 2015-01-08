@@ -79,6 +79,7 @@ Set the value (-v) to false to remove a key.
 Special keys:
 
   default      This is the default nginx container.
+  ENV_*        To set the Docker env 'FOO', set ENV_FOO.
 
 Examples:
 
