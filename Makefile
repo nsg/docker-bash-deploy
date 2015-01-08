@@ -16,3 +16,6 @@ install: test
 		/usr/local/bin/shdeploy
 	sed -i "s/^GIT_VERSION=.*/GIT_VERSION=`git rev-parse --short HEAD`/" \
 		/var/lib/shdeploy/shremote
+
+help-pages:
+	for command in deploy undeploy meta install; do echo -e "\n\n" ./local-deploy $command; echo; ./local-deploy $command; done > HELP-PAGES
