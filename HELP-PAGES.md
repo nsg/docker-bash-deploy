@@ -1,7 +1,7 @@
 
 
 # none
-
+```
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
 
@@ -20,10 +20,11 @@ local-deploy deploy -H 10.0.0.2 -i nginx test -a text -o example.com
 
 Specify a custom config file
 local-deploy deploy -c ../myfile -i nginx test -a text -o example.com
+```
 
 
 # deploy
-
+```
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
 
@@ -39,10 +40,11 @@ Example:
 
 To deploy the image nginx on test.example.com:
 local-deploy deploy -i nginx -a test -o example.com
+```
 
 
 # undeploy
-
+```
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
 
@@ -57,10 +59,11 @@ Example:
 
 To undeploy test.example.com:
 local-deploy undeploy -a test -o example.com
+```
 
 
 # remove
-
+```
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
 
@@ -75,10 +78,11 @@ Example:
 
 To remove test.example.com:
 local-deploy remove -a test -o example.com
+```
 
 
 # meta
-
+```
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
 
@@ -106,10 +110,11 @@ local-deploy meta -a test -o example.com
 
 Set metadata for test.example.com:
 local-deploy meta -a test -o example.com -k mykey -v myvalue
+```
 
 
 # install
-
+```
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
 
@@ -123,10 +128,11 @@ Setup the servers, install needed applications.
 First time using this tool? You need to have passwordless root
 access to the server. Verify that with 'ssh root@example.com'.
 Do a full install with local-deploy install full.
+```
 
 
 # config
-
+```
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
 
@@ -138,3 +144,4 @@ Example configuration file:
 
   servers=10.0.0.2 example.com
   domain=example.com
+```
