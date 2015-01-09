@@ -57,7 +57,7 @@ undeploy_container() {
 		docker stop $(cat /tmp/docker/$domain/$app/id)
 		rm -f /etc/nginx/conf.d/${domain}-${app}.conf
 		nginx -s reload
-		rm -rf /tmp/docker/$domain/$app
+		rm -f /tmp/docker/$domain/$app/id
 	fi
 }
 
@@ -190,7 +190,34 @@ check_release() {
 	esac
 }
 
+array_has_element() {
+	local elem
+	for elem in "${@:2}"; do
+		if [ "x$elem" == "x$1" ]; then
+			return 0
+		fi
+	done
+	return 1
+}
+
+check_for_dns() {
+	local domain=$1
+	local app=$2
+
+	for record in A AAAA; do
+		for ip in $(dig +short $record $app.$domain); do
+			if ip addr | grep -qi $ip; then
+				echo -n " [DNS:$record]"
+			fi
+		done
+	done
+}
+
 list_apps() {
+	[ ! -d /tmp/docker/* ] && exit 0
+
+	declare -a containers
+
 	for uid in $(docker ps --no-trunc -q); do
 		local domain_app=$(get_domain_app_from_id $uid)
 
@@ -200,6 +227,8 @@ list_apps() {
 		local image=$(get_metadata $domain $app image)
 		local default=$(get_metadata $domain $app default)
 
+		containers+=($app.$domain)
+
 		echo -n "$app.$domain ($image):80 ⇄ $port"
 
 		# Is this the default container
@@ -208,17 +237,26 @@ list_apps() {
 		fi
 
 		# DNS lookup
-		for record in A AAAA; do
-			for ip in $(dig +short $record $app.$domain); do
-				if ip addr | grep -qi $ip; then
-					echo -n " [DNS:$record]"
-				fi
-			done
-		done
+		check_for_dns $domain $app
 
 		echo # newline
 
 	done
+
+	for domain in /tmp/docker/*; do
+		for app in $domain/*; do
+			local atest=${app##*/}.${domain##*/}
+			if ! array_has_element $atest "${containers[@]}"; then
+				echo -n "$atest [not deployed]"
+		
+				# DNS lookup
+				check_for_dns ${domain##*/} ${app##*/}
+
+				echo # newline
+			fi
+		done
+	done
+
 }
 
 case $1 in
