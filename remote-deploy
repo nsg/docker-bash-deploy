@@ -21,6 +21,8 @@ deploy_container() {
 	local image=$3
 	local port=$(find_free_port)
 
+	[[ $image == - ]] && image=$(get_metadata $domain $app image)
+
 	if [ "x$(app_in_dns $app $domain)" == xtrue ]; then
 		mkdir -p /tmp/docker/$domain/$app
 
