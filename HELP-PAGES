@@ -59,6 +59,24 @@ To undeploy test.example.com:
 local-deploy undeploy -a test -o example.com
 
 
+ ./local-deploy remove
+
+local-deploy based on commit HEAD
+This is a simple deployment tool written in bash.
+
+usage:    local-deploy remove -[ao]
+
+Remove a container and all metadata.
+
+  -a      The name of the app
+  -o      The domain
+
+Example:
+
+To remove test.example.com:
+local-deploy remove -a test -o example.com
+
+
  ./local-deploy meta
 
 local-deploy based on commit HEAD
@@ -105,3 +123,18 @@ Setup the servers, install needed applications.
 First time using this tool? You need to have passwordless root
 access to the server. Verify that with 'ssh root@example.com'.
 Do a full install with local-deploy install full.
+
+
+ ./local-deploy config
+
+local-deploy based on commit HEAD
+This is a simple deployment tool written in bash.
+
+usage:    local-deploy config show
+
+  show      Show loaded config.
+
+Example configuration file:
+
+  servers=10.0.0.2 example.com
+  domain=example.com
