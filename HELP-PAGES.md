@@ -1,6 +1,6 @@
 
 
- ./local-deploy none
+# none
 
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
@@ -22,7 +22,7 @@ Specify a custom config file
 local-deploy deploy -c ../myfile -i nginx test -a text -o example.com
 
 
- ./local-deploy deploy
+# deploy
 
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
@@ -41,7 +41,7 @@ To deploy the image nginx on test.example.com:
 local-deploy deploy -i nginx -a test -o example.com
 
 
- ./local-deploy undeploy
+# undeploy
 
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
@@ -59,7 +59,7 @@ To undeploy test.example.com:
 local-deploy undeploy -a test -o example.com
 
 
- ./local-deploy remove
+# remove
 
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
@@ -77,7 +77,7 @@ To remove test.example.com:
 local-deploy remove -a test -o example.com
 
 
- ./local-deploy meta
+# meta
 
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
@@ -108,7 +108,7 @@ Set metadata for test.example.com:
 local-deploy meta -a test -o example.com -k mykey -v myvalue
 
 
- ./local-deploy install
+# install
 
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
@@ -125,7 +125,7 @@ access to the server. Verify that with 'ssh root@example.com'.
 Do a full install with local-deploy install full.
 
 
- ./local-deploy config
+# config
 
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
