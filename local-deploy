@@ -163,12 +163,7 @@ save_metadata() {
 	local key=$4
 	local value=$5
 
-	remote_command_raw $host "mkdir -p /tmp/docker/$domain/$app"
-	if [ "x$value" == "xfalse" ]; then
-		remote_command_raw $host "rm /tmp/docker/$domain/$app/$key"
-	else
-		remote_command_raw $host "echo $value > /tmp/docker/$domain/$app/$key"
-	fi
+	remote_command $host save-metadata $domain $app $key $value
 }
 
 # Select mode

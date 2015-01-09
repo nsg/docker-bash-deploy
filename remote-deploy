@@ -349,6 +349,12 @@ case $1 in
 	list)
 		list_apps
 		;;
+	save-metadata)
+		save_metadata $2 $3 $4 $5
+		;;
+	get-metadata)
+		get_metadata $2 $3 $4
+		;;
 	version)
 		echo $GIT_VERSION
 		;;
