@@ -65,6 +65,8 @@ show_help() {
 			echo
 			echo -e "  \e[1mdefault\e[0m      This is the default nginx container."
 			echo -e "  \e[1mENV_*\e[0m        To set the Docker env 'FOO', set ENV_FOO."
+			echo -e "  \e[1mport*\e[0m        To forward port 22 inside the container"
+			echo -e "               to 4722 on the host, set port22 to 4711."
 			echo
 			echo -e "Examples:"
 			echo

@@ -102,6 +102,8 @@ Special keys:
 
   default      This is the default nginx container.
   ENV_*        To set the Docker env 'FOO', set ENV_FOO.
+  port*        To forward port 22 inside the container
+               to 4722 on the host, set port22 to 4711.
 
 Examples:
 

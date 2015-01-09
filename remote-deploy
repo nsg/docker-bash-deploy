@@ -30,8 +30,26 @@ deploy_container() {
 			fi
 		done
 
+		# Generate port forwards
+		local port_list
+		for p in /tmp/docker/$domain/$app/port[0-9]*; do
+			if [ -f $p ]; then
+				local p1=$(basename $p)
+				local p2=$(cat $p)
+				port_list="$port_list -p $p2:${p1:4} ";
+
+				# Is the port in use?
+				if netstat -ntap | grep -q $p2; then
+					echo "Port $p2 is already in use, you need to undeploy the container"
+					echo "your self first."
+					exit 1
+				fi
+			fi
+		done
+
 		echo -e "Deploying \e[1m$app.$domain\e[0m ($image) on port $port"
-		local app_id=$(docker run -d -p $port:80 $env_list \
+		echo -e "Extra: $env_list $port_list"
+		local app_id=$(docker run -d -p $port:80 $env_list $port_list \
 			--name app-$domain-$app-$port-$RANDOM $image)
 
 		configure_nginx $domain $app $port
@@ -42,9 +60,17 @@ deploy_container() {
 		save_metadata $domain $app domain $domain
 	fi
 
-	echo "Finding old instances of $app.$domain to undeploy"
+	stop_container $domain $app $port
+}
+
+stop_container() {
+	local domain=$1
+	local app=$2
+	local port=$3
+
 	for id in $(docker ps --no-trunc | grep -v :$port | grep app-${domain}-${app}- | awk '{print $1}'); do
-		docker stop $id
+		echo "Stop container id:$id"
+		docker stop $id > /dev/null
 	done
 }
 
@@ -255,6 +281,14 @@ list_apps() {
 		check_for_dns $domain $app
 
 		echo # newline
+
+		for p in /tmp/docker/$domain/$app/port[0-9]*; do
+			if [ -f $p ]; then
+				local p1=$(basename $p)
+				local p2=$(cat $p)
+				echo -e " ↳ forwarded port ${p1:4} ⇄ $p2"
+			fi
+		done
 
 	done
 
