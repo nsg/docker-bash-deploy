@@ -19,9 +19,10 @@ install: test
 
 help-pages:
 	for command in none deploy undeploy remove meta install config; do \
-		echo "\n\n#" $$command; \
+		echo "\n\n##" $$command; \
 		echo '```'; \
 		./local-deploy $$command; \
 		echo '```'; \
 	done > HELP-PAGES.md
 	sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" -i HELP-PAGES.md
+	sed "s/## none/# shdeploy help pages/" -i HELP-PAGES.md

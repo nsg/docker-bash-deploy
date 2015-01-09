@@ -1,6 +1,6 @@
 
 
-# none
+# shdeploy help pages
 ```
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
@@ -23,7 +23,7 @@ local-deploy deploy -c ../myfile -i nginx test -a text -o example.com
 ```
 
 
-# deploy
+## deploy
 ```
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
@@ -43,7 +43,7 @@ local-deploy deploy -i nginx -a test -o example.com
 ```
 
 
-# undeploy
+## undeploy
 ```
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
@@ -62,7 +62,7 @@ local-deploy undeploy -a test -o example.com
 ```
 
 
-# remove
+## remove
 ```
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
@@ -81,7 +81,7 @@ local-deploy remove -a test -o example.com
 ```
 
 
-# meta
+## meta
 ```
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
@@ -113,7 +113,7 @@ local-deploy meta -a test -o example.com -k mykey -v myvalue
 ```
 
 
-# install
+## install
 ```
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
@@ -131,7 +131,7 @@ Do a full install with local-deploy install full.
 ```
 
 
-# config
+## config
 ```
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
