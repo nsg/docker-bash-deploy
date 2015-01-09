@@ -2,6 +2,8 @@
 
 GIT_VERSION=HEAD
 
+shopt -s nullglob
+
 # Version check
 if [ "x$1" != "x$GIT_VERSION" ]; then
 	echo "Error : Version mismatch"
@@ -254,8 +256,15 @@ check_for_dns() {
 	done
 }
 
+has_apps() {
+	for f in /tmp/docker/*; do
+		[ -d $f ] && return 0
+	done
+	return 1
+}
+
 list_apps() {
-	[ ! -d /tmp/docker/* ] && exit 0
+	has_apps || exit 0
 
 	declare -a containers
 
