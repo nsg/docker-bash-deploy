@@ -5,7 +5,7 @@
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
 
-usage:    local-deploy [deploy|undeploy|meta|list|install|config] [-DcH]
+usage:      [deploy|undeploy|remove|meta|list|install|config] [-DcH]
 
   -D        Show debug messages
   -c path   Path to config file
@@ -48,7 +48,7 @@ This is a simple deployment tool written in bash.
 
 usage:    local-deploy undeploy -[ao]
 
-Undeploy (remove) a container.
+Undeploy a container.
 
   -a      The name of the app
   -o      The domain

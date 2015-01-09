@@ -61,6 +61,21 @@ undeploy_container() {
 	fi
 }
 
+remove_app() {
+	local domain=$1
+	local app=$2
+
+	[ ! -d /tmp/docker/$domain/$app ] && return 1
+
+	undeploy_container $domain $app
+	echo "Remove $app.$domain"
+	rm -rf /tmp/docker/$domain/$app
+	if [ ! -d /tmp/docker/$domain/* ]; then
+		echo "Remove $domain"
+		rmdir /tmp/docker/$domain
+	fi
+}
+
 has_app() {
 	local domain=$1
 	local chapp=$2
@@ -265,6 +280,9 @@ case $1 in
 		;;
 	undeploy)
 		undeploy_container $2 $3
+		;;
+	remove)
+		remove_app $2 $3
 		;;
 	setup)
 		setup_host

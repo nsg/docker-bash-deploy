@@ -25,7 +25,7 @@ show_help() {
 		undeploy)
 			echo -e "usage:    `basename $0` \e[1mundeploy -[ao]\e[0m"
 			echo
-			echo -e "Undeploy (remove) a container."
+			echo -e "Undeploy a container."
 			echo
 			echo -e "  \e[1m-a\e[0m      The name of the app"
 			echo -e "  \e[1m-o\e[0m      The domain"
@@ -34,6 +34,19 @@ show_help() {
 			echo
 			echo -e "To undeploy test.example.com:"
 			echo -e "`basename $0` undeploy -a test -o example.com"
+			;;
+		remove)
+			echo -e "usage:    `basename $0` \e[1mremove -[ao]\e[0m"
+			echo
+			echo -e "Remove a container and all metadata."
+			echo
+			echo -e "  \e[1m-a\e[0m      The name of the app"
+			echo -e "  \e[1m-o\e[0m      The domain"
+			echo
+			echo -e "Example:"
+			echo
+			echo -e "To remove test.example.com:"
+			echo -e "`basename $0` remove -a test -o example.com"
 			;;
 		meta)
 			echo -e "usage:    `basename $0` \e[1mmeta -[aokv]\e[0m"
@@ -84,7 +97,7 @@ show_help() {
 			echo -e "  domain=example.com"
 			;;
 		*)
-			echo -e "usage:    `basename $0` \e[1m[deploy|undeploy|meta|list|install|config] [-DcH]\e[0m"
+			echo -e "usage:      \e[1m[deploy|undeploy|remove|meta|list|install|config] [-DcH]\e[0m"
 			echo
 			echo -e "  \e[1m-D\e[0m        Show debug messages"
 			echo -e "  \e[1m-c path\e[0m   Path to config file"
@@ -184,6 +197,11 @@ case $1 in
 		;;
 	meta)
 		__metadata=true
+		[ -z $2 ] && show_help $1
+		shift
+		;;
+	remove)
+		__remove=true
 		[ -z $2 ] && show_help $1
 		shift
 		;;
@@ -299,6 +317,14 @@ if [ $__undeploy ] && [ $__app ] && [ $domain ]; then
 	for host in $hosts; do
 		echo -e "\e[1m$host\e[0m: "
 		remote_command $host undeploy $domain $__app
+	done
+fi
+
+# Remove a container
+if [ $__remove ] && [ $__app ] && [ $domain ]; then
+	for host in $hosts; do
+		echo -e "\e[1m$host\e[0m: "
+		remote_command $host remove $domain $__app
 	done
 fi
 
