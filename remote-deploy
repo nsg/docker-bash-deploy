@@ -44,9 +44,9 @@ deploy_container() {
 
 				# Is the port in use?
 				if netstat -ntap | grep -q $p2; then
-					echo "Port $p2 is already in use, you need to undeploy the container"
-					echo "your self first."
-					exit 1
+					echo "Port $p2 is already in use, the old container will be undeployed before"
+					echo "the deploy. This will cause a short service interruption."
+					stop_container $domain $app $port
 				fi
 			fi
 		done
