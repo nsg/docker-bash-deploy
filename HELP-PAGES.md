@@ -124,6 +124,7 @@ usage:    local-deploy install [full|remote]
 
   full      Check installed apps and do a full reconfigure.
   remote    Only update the remote script.
+  vpn       Only update the vpn config.
 
 Setup the servers, install needed applications.
 

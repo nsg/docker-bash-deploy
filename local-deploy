@@ -85,6 +85,7 @@ show_help() {
 			echo
 			echo -e "  \e[1mfull\e[0m      Check installed apps and do a full reconfigure."
 			echo -e "  \e[1mremote\e[0m    Only update the remote script."
+			echo -e "  \e[1mvpn\e[0m       Only update the vpn config."
 			echo
 			echo -e "Setup the servers, install needed applications."
 			echo
@@ -300,7 +301,6 @@ fi
 # Install the remote half of the script
 if [ $__install ]; then
 	for host in $hosts; do
-
 		if [ "x$__install" == "xfull" ] || [ "x$__install" == "xremote" ]; then
 			scp $REMOTE_DEPLOY_COMMAND root@$host:/usr/local/bin/deploy
 			ssh root@$host chmod +x /usr/local/bin/deploy
@@ -310,6 +310,11 @@ if [ $__install ]; then
 			remote_command $host setup
 		fi
 	done
+
+	if [ "x$__install" == "xfull" ] || [ "x$__install" == "xvpn" ]; then
+		chmod +x $TINC_LOCAL_FILE
+		echo $hosts | $TINC_LOCAL_FILE vpn
+	fi
 fi
 
 # List running containers
