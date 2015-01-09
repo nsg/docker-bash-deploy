@@ -51,9 +51,14 @@ deploy_container() {
 			fi
 		done
 
-		echo -e "Deploying \e[1m$app.$domain\e[0m ($image) on port $port"
+		local http_port=80;
+		if has_metadata $domain $app http-port; then
+			http_port=$(get_metadata $domain $app http-port)
+		fi
+
+		echo -e "Deploying \e[1m$app.$domain\e[0m ($image):$http_port ⇄ $port"
 		echo -e "Extra: $env_list $port_list"
-		local app_id=$(docker run -d -p $port:80 $env_list $port_list \
+		local app_id=$(docker run -d -p $port:$http_port $env_list $port_list \
 			--name app-$domain-$app-$port-$RANDOM $image)
 
 		configure_nginx $domain $app $port
@@ -178,6 +183,15 @@ get_metadata() {
 	local key=$3
 
 	[ -f /tmp/docker/$domain/$app/$key ] && cat /tmp/docker/$domain/$app/$key
+}
+
+has_metadata() {
+	local domain=$1
+	local app=$2
+	local key=$3
+
+	[ -f /tmp/docker/$domain/$app/$key ] && return 0
+	return 1
 }
 
 find_free_port() {
