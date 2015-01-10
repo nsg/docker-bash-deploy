@@ -56,6 +56,8 @@ deploy_container() {
 			http_port=$(get_metadata $domain $app http-port)
 		fi
 
+		block_port tcp $port
+
 		echo -e "Deploying \e[1m$app.$domain\e[0m ($image):$http_port ⇄ $port"
 		echo -e "Extra: $env_list $port_list"
 		local app_id=$(docker run -d -p $port:$http_port $env_list $port_list \
@@ -94,6 +96,8 @@ undeploy_container() {
 		nginx -s reload
 		rm -f /tmp/docker/$domain/$app/id
 	fi
+
+	unblock_port tcp $port
 }
 
 remove_app() {
@@ -220,6 +224,8 @@ app_in_dns() {
 setup_host() {
 	check_release
 
+	export DEBIAN_FRONTEND=noninteractive
+
 	# Install Docker from the latest Docker repos
 	apt-key adv \
 		--keyserver hkp://keyserver.ubuntu.com:80 \
@@ -250,6 +256,64 @@ setup_host() {
 save_firewall() {
 	iptables-save > /etc/iptables/rules.v4
 	ip6tables-save > /etc/iptables/rules.v6
+}
+
+unblock_port() {
+	local proto=$1
+	local port=$2
+
+	if has_ipv4; then
+		local host4=$(ip -4 route get 8.8.8.8 | awk '/src/{print $NF}')
+		while iptables -D INPUT -p $proto --dport $port -d $host4 -j DROP 2> /dev/null; do
+			echo "Remove INPUT FW rule for $proto:$port for ipv4"
+		done
+		while iptables -D FORWARD -p $proto --dport $port -d $host4 -j DROP 2> /dev/null; do
+			echo "Remove FORWARD FW rule for $proto:$port for ipv4"
+		done
+	fi
+
+	if has_ipv6; then
+		local host6=$(ip -6 route get 2001:4860:4860::8888 | awk '/src/{print $NF}')
+		while ip6tables -D INPUT -p $proto --dport $port -d $host6 -j DROP 2> /dev/null; do
+			echo "Remove INPUT FW rule for $proto:$port for ipv6"
+		done
+		while ip6tables -D FORWARD -p $proto --dport $port -d $host6 -j DROP 2> /dev/null; do
+			echo "Remove FORWARD FW rule for $proto:$port for ipv6"
+		done
+	fi
+}
+
+block_port() {
+	local proto=$1
+	local port=$2
+
+	if has_ipv4; then
+		local host4=$(ip -4 route get 8.8.8.8 | awk '/src/{print $NF}')
+		iptables -I INPUT -p $proto --dport $port -d $host4 -j DROP
+		iptables -I FORWARD -p $proto --dport $port -d $host4 -j DROP
+		echo "Add FW rule for $proto:$port for ipv4"
+	fi
+
+	if has_ipv6; then
+		local host6=$(ip -6 route get 2001:4860:4860::8888 | awk '/src/{print $NF}')
+		ip6tables -I INPUT -p $proto --dport $port -d $host6 -j DROP
+		ip6tables -I FORWARD -p $proto --dport $port -d $host6 -j DROP
+		echo "Add FW rule for $proto:$port for ipv6"
+	fi
+}
+
+has_ipv4() {
+	if ip -4 route get 8.8.8.8 | grep -q unreachable; then
+		return 1
+	fi
+	return 0
+}
+
+has_ipv6() {
+	if ip -6 route get 2001:4860:4860::8888 | grep -q unreachable; then
+		return 1
+	fi
+	return 0
 }
 
 check_release() {
@@ -377,6 +441,12 @@ case $1 in
 		;;
 	get-metadata)
 		get_metadata $2 $3 $4
+		;;
+	remove-fwrule)
+		unblock_port $2 $3
+		;;
+	add-fwrule)
+		block_port $2 $3
 		;;
 	version)
 		echo $GIT_VERSION
