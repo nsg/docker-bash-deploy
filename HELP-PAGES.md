@@ -5,7 +5,8 @@
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
 
-usage:      [deploy|undeploy|remove|meta|list|install|config] [-DcH]
+usage:      [deploy|undeploy|remove|meta|list|install|config|
+            status] [-DcH]
 
   -D        Show debug messages
   -c path   Path to config file
