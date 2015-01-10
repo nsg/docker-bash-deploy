@@ -239,6 +239,8 @@ setup_host() {
 	wget -O /tmp/glusterfs.key \
 		http://download.gluster.org/pub/gluster/glusterfs/3.6/LATEST/Debian/wheezy/pubkey.gpg
 	echo "d903892dfe9afa0be141f27fd1c1889f770b4e8d  /tmp/glusterfs.key" | sha1sum -c -
+		apt-key add /tmp/glusterfs.key
+	    echo "deb [arch=amd64] http://download.gluster.org/pub/gluster/glusterfs/3.6/3.6.1/Debian/wheezy/apt wheezy main" > /etc/apt/sources.list.d/glusterfs.list
 	if [ $? != 0 ]; then
 		echo "glusterfs.key checksum fail!"
 		exit 1
