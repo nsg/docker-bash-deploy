@@ -242,6 +242,14 @@ setup_host() {
 	fi
 	apt-get update
 	apt-get install -y glusterfs-server attr
+
+	# Install iptables-persistent
+	apt-get install -y iptables-persistent
+}
+
+save_firewall() {
+	iptables-save > /etc/iptables/rules.v4
+	ip6tables-save > /etc/iptables/rules.v6
 }
 
 check_release() {
@@ -374,3 +382,6 @@ case $1 in
 		echo $GIT_VERSION
 		;;
 esac
+
+# Script done, save updated firewall rules
+save_firewall
