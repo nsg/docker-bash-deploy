@@ -18,7 +18,7 @@ install: test
 		/var/lib/shdeploy/shremote
 
 help-pages:
-	for command in none deploy undeploy remove meta install config; do \
+	for command in none deploy undeploy remove meta install config status; do \
 		echo "\n\n##" $$command; \
 		echo '```'; \
 		./local-deploy $$command; \

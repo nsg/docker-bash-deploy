@@ -148,3 +148,17 @@ Example configuration file:
   servers=10.0.0.2 example.com
   domain=example.com
 ```
+
+
+## status
+```
+local-deploy based on commit HEAD
+This is a simple deployment tool written in bash.
+
+usage:    local-deploy status [vpn|fs]
+
+  vpn       Show VPN status.
+  fs        Show filesystem status.
+
+Show server status.
+```
