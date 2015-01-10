@@ -93,6 +93,14 @@ show_help() {
 			echo -e "access to the server. Verify that with 'ssh root@example.com'."
 			echo -e "Do a full install with `basename $0` install full."
 			;;
+		status)
+			echo -e "usage:    `basename $0` \e[1mstatus [vpn|fs]\e[0m"
+			echo
+			echo -e "  \e[1mvpn\e[0m       Show VPN status."
+			echo -e "  \e[1mfs\e[0m        Show filesystem status."
+			echo
+			echo -e "Show server status."
+			;;
 		config)
 			echo -e "usage:    `basename $0` \e[1mconfig show\e[0m"
 			echo
@@ -217,6 +225,11 @@ case $1 in
 		;;
 	remove)
 		__remove=true
+		[ -z $2 ] && show_help $1
+		shift
+		;;
+	status)
+		__status=$2
 		[ -z $2 ] && show_help $1
 		shift
 		;;
@@ -372,5 +385,13 @@ if [ $__metadata ] && [ $__app ] && [ $__key ] && [ $__value ] && [ $domain ]; t
 elif [ $__metadata ] && [ $__app ] && [ $domain ]; then
 	for host in $hosts; do
 		get_app $host $domain $__app
+	done
+fi
+
+# Show status
+if [ $__status ]; then
+	for host in $hosts; do
+		echo -e "\e[1m$host\e[0m: "
+		remote_command $host status $__status
 	done
 fi
