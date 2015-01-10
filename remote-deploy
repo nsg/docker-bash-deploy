@@ -231,6 +231,17 @@ setup_host() {
 	# Install nginx and configure nginx
 	apt-get install -y nginx
 	rm -f /etc/nginx/sites-available/* /etc/nginx/sites-enabled/*
+
+	# Install GlusterFS
+	wget -O /tmp/glusterfs.key \
+		http://download.gluster.org/pub/gluster/glusterfs/3.6/LATEST/Debian/wheezy/pubkey.gpg
+	echo "d903892dfe9afa0be141f27fd1c1889f770b4e8d  /tmp/glusterfs.key" | sha1sum -c -
+	if [ $? != 0 ]; then
+		echo "glusterfs.key checksum fail!"
+		exit 1
+	fi
+	apt-get update
+	apt-get install -y glusterfs-server attr
 }
 
 check_release() {
