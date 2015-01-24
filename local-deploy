@@ -333,6 +333,7 @@ fi
 # Install the remote half of the script
 if [ $__install ]; then
 	for host in $hosts; do
+		echo -e "\e[1m$host\e[0m:"
 		if [ "x$__install" == "xfull" ] || [ "x$__install" == "xremote" ]; then
 			scp $REMOTE_DEPLOY_COMMAND root@$host:/usr/local/bin/deploy
 			ssh root@$host chmod +x /usr/local/bin/deploy
