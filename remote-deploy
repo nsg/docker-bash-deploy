@@ -224,19 +224,13 @@ setup_host() {
 
 	export DEBIAN_FRONTEND=noninteractive
 
-	# Install Docker from the latest Docker repos
+	# Setup docker repo
 	apt-key adv \
 		--keyserver hkp://keyserver.ubuntu.com:80 \
 		--recv-keys 36A1D7869245C8950F966E92D8576A8BA88D21E9
 	echo deb https://get.docker.com/ubuntu docker main > /etc/apt/sources.list.d/docker.list
-	apt-get update
-	apt-get install -y lxc-docker
 
-	# Install nginx and configure nginx
-	apt-get install -y nginx
-	rm -f /etc/nginx/sites-available/* /etc/nginx/sites-enabled/*
-
-	# Install GlusterFS
+	# Setup gluster repo
 	wget -O /tmp/glusterfs.key \
 		http://download.gluster.org/pub/gluster/glusterfs/3.6/LATEST/Debian/wheezy/pubkey.gpg
 	echo "d903892dfe9afa0be141f27fd1c1889f770b4e8d  /tmp/glusterfs.key" | sha1sum -c -
@@ -246,11 +240,81 @@ setup_host() {
 		echo "glusterfs.key checksum fail!"
 		exit 1
 	fi
-	apt-get update
-	apt-get install -y glusterfs-server attr
 
-	# Install iptables-persistent
-	apt-get install -y iptables-persistent
+	# Update repos
+	apt-get update
+
+	# Install packages
+	apt-get install -y lxc-docker nginx glusterfs-server attr iptables-persistent
+
+	# nginx config
+	rm -f /etc/nginx/sites-available/* /etc/nginx/sites-enabled/*
+
+	# Detect default interface for ipv4 and ipv6
+	local ifv4=$(ip -4 route get 8.8.8.8 | grep dev | sed 's/.*dev \([^ ]*\).*/\1/')
+	local ifv6=$(ip -6 route get 2001:4860:4860::8888 | grep dev | sed 's/.*dev \([^ ]*\).*/\1/')
+
+	if [ -z $ifv4 ] && [ -z $ifv6 ]; then
+		echo "Error, no IPv4 or IPv6 interfaces found."
+		echo "Install aborted"
+		exit 1
+	fi
+
+	# Configure firewall for IPv4
+	if [[ $ifv4 != lo ]] && [ ! -z $ifv4 ]; then
+		echo "Host has IPv4: Default IPv4 interface is $ifv4"
+
+		# Drop all packages from the internet
+		firewall_rule 4 -P INPUT   DROP
+		firewall_rule 4 -P FORWARD DROP
+		firewall_rule 4 -P OUTPUT  ACCEPT
+
+		# Allow traffic on local if
+		firewall_rule 4 -A INPUT  -i lo -j ACCEPT
+		firewall_rule 4 -A OUTPUT -o lo -j ACCEPT
+
+		# Allow traffic on other networks
+		firewall_rule 4 -A INPUT  ! -i $ifv4 -j ACCEPT
+
+		# Accept
+		firewall_rule 4 -A INPUT -i $ifv4 -m state --state ESTABLISHED,RELATED -j ACCEPT
+		firewall_rule 4 -A INPUT -i $ifv4 -p icmp -m limit --limit 10/second -j ACCEPT
+
+		# Limit SSH access
+		firewall_rule 4 -A INPUT -p tcp --dport 22 -m recent --update --seconds 60 \
+			--hitcount 15 --name SSH -j DROP
+		firewall_rule 4 -A INPUT -p tcp --dport 22 -m state --state NEW -m recent \
+			--set --name SSH -j ACCEPT
+	fi
+
+	# Configure firewall for IPv6
+	if [[ $ifv6 != lo ]] && [ ! -z $ifv6 ]; then
+		echo "Host has IPv6: Default IPv6 interface is $ifv6"
+
+		# Drop all packages from the internet
+		firewall_rule 6 -P INPUT   DROP
+		firewall_rule 6 -P FORWARD DROP
+		firewall_rule 6 -P OUTPUT  ACCEPT
+
+		# Allow traffic on local if
+		firewall_rule 6 -A INPUT  -i lo -j ACCEPT
+		firewall_rule 6 -A OUTPUT -o lo -j ACCEPT
+
+		# Allow traffic on other networks
+		firewall_rule 4 -A INPUT  ! -i $ifv6 -j ACCEPT
+
+		# Accept
+		firewall_rule 6 -A INPUT -i $ifv6 -m state --state ESTABLISHED,RELATED -j ACCEPT
+		firewall_rule 6 -A INPUT -i $ifv6 -p icmp -m limit --limit 10/second -j ACCEPT
+
+		# Limit SSH access
+		firewall_rule 6 -A INPUT -p tcp --dport 22 -m recent --update --seconds 60 \
+			--hitcount 15 --name SSH -j DROP
+		firewall_rule 6 -A INPUT -p tcp --dport 22 -m state --state NEW -m recent \
+			--set --name SSH -j ACCEPT
+	fi
+
+	save_firewall
 }
 
 save_firewall() {
@@ -258,7 +322,24 @@ save_firewall() {
 	ip6tables-save > /etc/iptables/rules.v6
 }
 
-unblock_port() {
+firewall_rule() {
+	local version=$1
+	local flag=$2
+	shift 2
+	if [[ $version == 4 ]]; then
+		iptables  -C $@ 2> /dev/null || ( 
+			[[ $flag != -P ]] && set -x
+			iptables  $flag $@
+		)
+	else
+		ip6tables -C $@ 2> /dev/null || (
+			[[ $flag != -P ]] && set -x
+			ip6tables $flag $@
+		)
+	fi
+}
+
+remove_port_rule() {
 	local proto=$1
 	local port=$2
 
@@ -281,25 +362,25 @@ unblock_port() {
 			echo "Remove FORWARD FW rule for $proto:$port for ipv6"
 		done
 	fi
+
+	save_firewall
 }
 
-block_port() {
+open_port() {
 	local proto=$1
 	local port=$2
 
 	if has_ipv4; then
-		local host4=$(ip -4 route get 8.8.8.8 | awk '/src/{print $NF}')
-		iptables -I INPUT -p $proto --dport $port -d $host4 -j DROP
-		iptables -I FORWARD -p $proto --dport $port -d $host4 -j DROP
-		echo "Add FW rule for $proto:$port for ipv4"
+		local ifv4=$(ip -4 route get 8.8.8.8 | grep dev | sed 's/.*dev \([^ ]*\).*/\1/')
+		firewall_rule 4 -I INPUT -p $proto --dport $port -i $ifv4 -j ACCEPT
 	fi
 
 	if has_ipv6; then
-		local host6=$(ip -6 route get 2001:4860:4860::8888 | awk '/src/{print $NF}')
-		ip6tables -I INPUT -p $proto --dport $port -d $host6 -j DROP
-		ip6tables -I FORWARD -p $proto --dport $port -d $host6 -j DROP
-		echo "Add FW rule for $proto:$port for ipv6"
+		local ifv6=$(ip -6 route get 2001:4860:4860::8888 | grep dev | sed 's/.*dev \([^ ]*\).*/\1/')
+		firewall_rule 6 -I INPUT -p $proto --dport $port -i $ifv6 -j ACCEPT
 	fi
+
+	save_firewall
 }
 
 has_ipv4() {
@@ -466,12 +547,6 @@ case $1 in
 	get-metadata)
 		get_metadata $2 $3 $4
 		;;
-	remove-fwrule)
-		unblock_port $2 $3
-		;;
-	add-fwrule)
-		block_port $2 $3
-		;;
 	status)
 		show_status $2
 		;;
@@ -482,6 +557,3 @@ case $1 in
 		echo $GIT_VERSION
 		;;
 esac
-
-# Script done, save updated firewall rules
-save_firewall
