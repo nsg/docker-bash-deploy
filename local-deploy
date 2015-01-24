@@ -161,13 +161,23 @@ get_app() {
 remote_command() {
 	local host=$1
 	shift
-	ssh -l root $host deploy $GIT_VERSION $@
+	ssh \
+		-l root \
+		-o ControlPath=/tmp/shdeploy-%l-%r@%h:%p \
+		-o ControlMaster=auto \
+		$host deploy $GIT_VERSION $@ \
+		| grep -v 'disabling multiplexing'
 }
 
 remote_command_raw() {
 	local host=$1
 	shift
-	ssh -l root $host $@
+	ssh \
+		-l root \
+		-o ControlPath=/tmp/shdeploy-%l-%r@%h:%p \
+		-o ControlMaster=auto \
+		$host $@ \
+		| grep -v 'disabling multiplexing'
 }
 
 save_metadata() {
@@ -297,6 +307,14 @@ fi
 
 # Download and verify setup-vpn from GitHub
 wget_sha1sum $TINC_CLUSTER_URL $TINC_LOCAL_FILE $TINC_SHA1SUM
+
+# Setup connections (if needed)
+for host in $hosts; do
+	if ! ps -ef | grep ssh | grep $host | grep -q waitfor; then
+		echo "Setup persistent connection to $host"
+		remote_command $host waitfor &
+	fi
+done
 
 # Show config
 if [ $__show_config ]; then
