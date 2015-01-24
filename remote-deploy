@@ -129,7 +129,8 @@ get_app_from_id_with_domain() {
 	local domain=$1
 	local uid=$2
 
-	grep -l $uid /tmp/docker/$domain/*/id | awk -F'/' '{print $5}'
+	local path=$(echo /tmp/docker/$domain/*/id)
+	[ ! -z $path ] && grep -l $uid $path | awk -F'/' '{print $5}'
 }
 
 get_domain_app_from_id() {
