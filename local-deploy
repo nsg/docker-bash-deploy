@@ -217,7 +217,7 @@ case $1 in
 	install)
 		__install=$2
 		[ -z $2 ] && show_help $1
-		shift
+		shift 2
 		;;
 	deploy)
 		__deploy=true
