@@ -346,6 +346,9 @@ if [ $__install ]; then
 
 	if [ "x$__install" == "xfull" ] || [ "x$__install" == "xvpn" ]; then
 		chmod +x $TINC_LOCAL_FILE
+		for host in $hosts; do
+			remote_command $host openport tcp 655
+		done
 		echo $hosts | $TINC_LOCAL_FILE vpn
 	fi
 fi
