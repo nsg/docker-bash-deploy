@@ -245,6 +245,7 @@ setup_host() {
 
 	# nginx config
 	rm -f /etc/nginx/sites-available/* /etc/nginx/sites-enabled/*
+	open_port tcp 80
 
 	# Detect default interface for ipv4 and ipv6
 	local ifv4=$(ip -4 route get 8.8.8.8 | grep dev | sed 's/.*dev \([^ ]*\).*/\1/')
