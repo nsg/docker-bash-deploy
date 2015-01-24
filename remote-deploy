@@ -312,6 +312,16 @@ setup_host() {
 	fi
 
 	save_firewall
+
+	# Download docker-gc from Spotify
+	if [ ! -f /etc/cron.hourly/docker-gc ]; then
+		echo "Download docker-gc from Spotify"
+		curl -L https://raw.githubusercontent.com/spotify/docker-gc/1b5d533172fa3707dcd4e5a4a3b7cd25d6e6e237/docker-gc -o /tmp/docker-gc
+		echo "512be3310ab699b9ff414bc4026553a32eab31af  /tmp/docker-gc" | sha1sum -c - || exit 1
+		mv /tmp/docker-gc /etc/cron.hourly/docker-gc
+		chmod +x /etc/cron.hourly/docker-gc
+	fi
+
 }
 
 save_firewall() {
