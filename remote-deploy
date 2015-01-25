@@ -324,6 +324,50 @@ setup_host() {
 
 }
 
+setup_gluster_share() {
+	local num_vpn_nodes=1
+	local bricks=
+
+	# Use the ARP table to detect the other hosts.
+	for ip in $(arp -an -H ether | awk '/on vpn/{print $2}' | tr -d '()'); do
+		num_vpn_nodes=$(( $num_vpn_nodes + 1 ))
+		bricks="$bricks $ip:/share"
+		if ! gluster peer status | awk '/Hostname/{print $NF}' | grep -q $ip; then
+			echo "Add Gluster peer $ip"
+			gluster peer probe $ip
+		fi
+	done
+
+	# Make sure we have the shared path
+	mkdir -p /share
+
+	for ip in $(hostname -I); do
+		if [[ $ip == '10.10.0.1' ]]; then
+			bricks="$ip:/share $bricks"
+			local num_bricks=$(gluster volume info share | awk '/Number of Bricks/{print $NF}')
+			echo "This is VPN host 10.10.0.1, we have $num_vpn_nodes bricks in the cluster."
+			if [[ $num_bricks != $num_vpn_nodes ]]; then
+
+				# Bricks do not match VPN nodes, try to change that
+				if [ $num_vpn_nodes -gt $num_bricks ]; then
+					echo "Number of bricks/replica need to be increased to $num_vpn_nodes"
+					echo gluster volume add-brick share replica $num_vpn_nodes 
+				else
+					echo "We need to decrease number of bricks to $num_vpn_nodes"
+					echo "NOT implemented"
+					exit 1
+				fi
+
+#				gluster volume create share replica $num_vpn_nodes \
+#					transport tcp $bricks force
+#				gluster volume start share
+
+
+			fi
+		fi
+	done
+}
+
 save_firewall() {
 	iptables-save > /etc/iptables/rules.v4
 	ip6tables-save > /etc/iptables/rules.v6
@@ -512,8 +556,11 @@ show_status() {
 	local ch=$1
 
 	if [[ $ch == "fs" ]]; then
+		echo -e "\n\e[4mGluster peers\e[0m"
+		gluster peer status | cat -
+		echo
 		echo -e "\n\e[4mGluster volumes\e[0m"
-		gluster volume status
+		gluster volume status | cat -
 		echo
 		echo -e "\e[4mContainer disk usage\e[0m"
 		df -h /var/lib/docker/ --output="ipcent,pcent" | \
