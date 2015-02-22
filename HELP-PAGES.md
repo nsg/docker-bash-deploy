@@ -125,9 +125,9 @@ local-deploy meta -a test -o example.com -k mykey -v myvalue
 local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
 
-usage:    local-deploy install [full|remote]
+usage:    local-deploy install [full|remote|vpn]
 
-  full      Check installed apps and do a full reconfigure.
+  full      Check installed apps and do all below.
   remote    Only update the remote script.
   vpn       Only update the vpn config.
 

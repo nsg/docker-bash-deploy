@@ -74,9 +74,9 @@ show_help() {
 			echo -e "`basename $0` meta -a test -o example.com -k mykey -v myvalue"
 			;;
 		install)
-			echo -e "usage:    `basename $0` \e[1minstall [full|remote]\e[0m"
+			echo -e "usage:    `basename $0` \e[1minstall [full|remote|vpn]\e[0m"
 			echo
-			echo -e "  \e[1mfull\e[0m      Check installed apps and do a full reconfigure."
+			echo -e "  \e[1mfull\e[0m      Check installed apps and do all below."
 			echo -e "  \e[1mremote\e[0m    Only update the remote script."
 			echo -e "  \e[1mvpn\e[0m       Only update the vpn config."
 			echo
