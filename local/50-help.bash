@@ -106,7 +106,7 @@ show_help() {
 			;;
 		*)
 			echo -e "usage:      \e[1m[deploy|undeploy|remove|meta|list|install|config|\e[0m"
-			echo -e "            \e[1mstatus] [-DcH]\e[0m"
+			echo -e "            \e[1mstatus] [app.domain.ltd] [-DcH]\e[0m"
 			echo
 			echo -e "  \e[1m-D\e[0m        Show debug messages"
 			echo -e "  \e[1m-c path\e[0m   Path to config file"
@@ -114,13 +114,17 @@ show_help() {
 			echo -e "  \e[1m-H host\e[0m   Provide a list of hosts on the commandline"
 			echo -e "            This overloads settings from -c"
 			echo
+			echo -e "  \e[1mapp.domain.ltd\e[0m is optional and are identical to -a app -o domain.ltd."
+			echo -e "  It is only a convenience shortcut that only make sense to use on"
+			echo -e "  commands that support -a and -o."
+			echo
 			echo -e "Example:"
 			echo
 			echo -e "To limit a deploy to a specific host"
-			echo -e "`basename $0` deploy \e[1m-H 10.0.0.2\e[0m" -i nginx test -a text -o example.com
+			echo -e "`basename $0` deploy \e[1m-H 10.0.0.2\e[0m" ...
 			echo
 			echo -e "Specify a custom config file"
-			echo -e "`basename $0` deploy \e[1m-c ../myfile\e[0m" -i nginx test -a text -o example.com
+			echo -e "`basename $0` deploy \e[1m-c ../myfile\e[0m" ...
 	esac
 
 	exit 0
