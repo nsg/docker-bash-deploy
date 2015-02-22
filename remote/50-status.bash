@@ -4,12 +4,6 @@ show_status() {
 	local ch=$1
 
 	if [[ $ch == "fs" ]]; then
-		echo -e "\n\e[4mGluster peers\e[0m"
-		gluster peer status | cat -
-		echo
-		echo -e "\n\e[4mGluster volumes\e[0m"
-		gluster volume status | cat -
-		echo
 		echo -e "\e[4mContainer disk usage\e[0m"
 		df -h /var/lib/docker/ --output="ipcent,pcent" | \
 			tail -1 | awk '{ print "inodes "$1" bytes "$2 }'

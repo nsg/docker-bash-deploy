@@ -11,18 +11,11 @@ setup_host() {
 		--recv-keys 36A1D7869245C8950F966E92D8576A8BA88D21E9
 	echo deb https://get.docker.com/ubuntu docker main > /etc/apt/sources.list.d/docker.list
 
-	# Setup gluster repo
-	wget -O /tmp/glusterfs.key \
-		http://download.gluster.org/pub/gluster/glusterfs/3.6/LATEST/Debian/wheezy/pubkey.gpg
-	echo "d903892dfe9afa0be141f27fd1c1889f770b4e8d  /tmp/glusterfs.key" | sha1sum -c - || exit 1
-		apt-key add /tmp/glusterfs.key
-	    echo "deb [arch=amd64] http://download.gluster.org/pub/gluster/glusterfs/3.6/3.6.1/Debian/wheezy/apt wheezy main" > /etc/apt/sources.list.d/glusterfs.list
-
 	# Update repos
 	apt-get update
 
 	# Install packages
-	apt-get install -y lxc-docker nginx glusterfs-server attr iptables-persistent
+	apt-get install -y lxc-docker nginx attr iptables-persistent
 
 	# nginx config
 	rm -f /etc/nginx/sites-available/* /etc/nginx/sites-enabled/*
@@ -103,50 +96,6 @@ setup_host() {
 		chmod +x /etc/cron.hourly/docker-gc
 	fi
 
-}
-
-setup_gluster_share() {
-	local num_vpn_nodes=1
-	local bricks=
-
-	# Use the ARP table to detect the other hosts.
-	for ip in $(arp -an -H ether | awk '/on vpn/{print $2}' | tr -d '()'); do
-		num_vpn_nodes=$(( $num_vpn_nodes + 1 ))
-		bricks="$bricks $ip:/share"
-		if ! gluster peer status | awk '/Hostname/{print $NF}' | grep -q $ip; then
-			echo "Add Gluster peer $ip"
-			gluster peer probe $ip
-		fi
-	done
-
-	# Make sure we have the shared path
-	mkdir -p /share
-
-	for ip in $(hostname -I); do
-		if [[ $ip == '10.10.0.1' ]]; then
-			bricks="$ip:/share $bricks"
-			local num_bricks=$(gluster volume info share | awk '/Number of Bricks/{print $NF}')
-			echo "This is VPN host 10.10.0.1, we have $num_vpn_nodes bricks in the cluster."
-			if [[ $num_bricks != $num_vpn_nodes ]]; then
-
-				# Bricks do not match VPN nodes, try to change that
-				if [ $num_vpn_nodes -gt $num_bricks ]; then
-					echo "Number of bricks/replica need to be increased to $num_vpn_nodes"
-					echo gluster volume add-brick share replica $num_vpn_nodes 
-				else
-					echo "We need to decrease number of bricks to $num_vpn_nodes"
-					echo "NOT implemented"
-					exit 1
-				fi
-
-#				gluster volume create share replica $num_vpn_nodes \
-#					transport tcp $bricks force
-#				gluster volume start share
-
-
-			fi
-		fi
-	done
 }
 
 check_release() {
