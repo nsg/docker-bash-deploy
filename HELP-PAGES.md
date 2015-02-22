@@ -6,7 +6,7 @@ local-deploy based on commit HEAD
 This is a simple deployment tool written in bash.
 
 usage:      [deploy|undeploy|remove|meta|list|install|config|
-            status] [-DcH]
+            status] [app.domain.ltd] [-DcH]
 
   -D        Show debug messages
   -c path   Path to config file
@@ -14,13 +14,17 @@ usage:      [deploy|undeploy|remove|meta|list|install|config|
   -H host   Provide a list of hosts on the commandline
             This overloads settings from -c
 
+  app.domain.ltd is optional and are identical to -a app -o domain.ltd.
+  It is only a convenience shortcut that only make sense to use on
+  commands that support -a and -o.
+
 Example:
 
 To limit a deploy to a specific host
-local-deploy deploy -H 10.0.0.2 -i nginx test -a text -o example.com
+local-deploy deploy -H 10.0.0.2 ...
 
 Specify a custom config file
-local-deploy deploy -c ../myfile -i nginx test -a text -o example.com
+local-deploy deploy -c ../myfile ...
 ```
 
 
