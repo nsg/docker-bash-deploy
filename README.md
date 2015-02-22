@@ -51,11 +51,11 @@ First time, we need to set the key `default` to set the container as the default
 (so that both nsg.cc and www.nsg.cc will work).
 
 ```
-shdeploy meta -a www -o nsg.cc -k default -v true
+shdeploy meta www.nsg.cc -k default -v true
 ```
 
 Time to deploy it...
 
 ```
-shdeploy deploy -a www -i nsgb/blog:1.3 -o nsg.cc
+shdeploy deploy www.nsg.cc -i nsgb/blog:1.3
 ```
