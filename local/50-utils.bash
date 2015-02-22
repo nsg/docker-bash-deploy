@@ -20,7 +20,7 @@ get_app() {
 	echo -e "\e[1m$host\e[0m:"
 	remote_command_raw $host "
 		for f in /tmp/docker/$domain/$app/*; do
-			echo -n \"\${f##*/} ↠ \"; cat \$f;
+			[ -f \$f ] && (echo -n \"\${f##*/} ↠ \"; cat \$f)
 		done"
 	echo
 }
